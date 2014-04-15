@@ -420,6 +420,7 @@ void RestDialogImpl::slotReplyFinish()
     releaseReplyResources();
     saveHistory(200);
 
+    m_headersText->clear();
     for (int i = 0; i < headers.size(); ++i) {
         m_headersText->append("<b>"+headers.at(i) + "</b>: " + m_reply->rawHeader(headers.at(i)));
     }
