@@ -55,6 +55,8 @@ public slots:
     void slotHistoryRemoveSelected();
     void slotHistoryClear();
 
+    void slotAbout();
+
 
 private:
     QTextEdit *m_response;

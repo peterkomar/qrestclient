@@ -35,6 +35,9 @@
 #include <QMessageBox>
 #include <QUrlQuery>
 #include <QApplication>
+#include <QStatusBar>
+#include <QMenuBar>
+#include <QSettings>
 
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -48,10 +51,18 @@ RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     m_history = new RequestHistory();
     m_history->init();
     loadHistory();
+
+    QSettings setting("UDL", "qrestclient");
+    QByteArray arr = setting.value("gui/state").toByteArray();
+    if( !arr.isEmpty() ) {
+        restoreState(arr);
+    }
 }
 
 RestClientMainWindow::~RestClientMainWindow()
 {
+    QSettings setting("UDL", "qrestclient");
+    setting.setValue("gui/state", saveState());
     delete m_history;
 }
 
@@ -84,6 +95,11 @@ void RestClientMainWindow::_gui()
      setupLeftPanel();
      setupRightPanel();
      setupBottomPabel();
+
+     QAction *a = new QAction("About", this);
+     QMenu *m = menuBar()->addMenu("Help");
+     m->addAction(a);
+     connect(a, SIGNAL(triggered()), this, SLOT(slotAbout()));
 }
 
 void RestClientMainWindow::setupToolBar()
@@ -112,6 +128,7 @@ void RestClientMainWindow::setupToolBar()
     tool->setLayout(l);
 
     QToolBar *toolBar = new QToolBar("restbar", this);
+    toolBar->setObjectName("RestToolBar");
     toolBar->addWidget(tool);
 
     addToolBar(toolBar);
@@ -502,4 +519,11 @@ void RestClientMainWindow::slotHistoryClear()
     loadHistory();
 
     QApplication::restoreOverrideCursor();
+}
+
+void RestClientMainWindow::slotAbout()
+{
+    QMessageBox::about(this, "About", "REST client for WEB services developers.<br/>"
+                       " Alows send GET, POST, PUT, DELETE requests to URL, manage sending params, heders, contets and save request in history.<br/><br/>"
+                       "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>");
 }
