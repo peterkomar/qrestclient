@@ -57,12 +57,15 @@ RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     if( !arr.isEmpty() ) {
         restoreState(arr);
     }
+    int tab = setting.value("gui/tab_index").toInt();
+    m_leftTabWidget->setCurrentIndex(tab);
 }
 
 RestClientMainWindow::~RestClientMainWindow()
 {
     QSettings setting("UDL", "qrestclient");
     setting.setValue("gui/state", saveState());
+    setting.setValue("gui/tab_index", m_leftTabWidget->currentIndex());
     delete m_history;
 }
 
@@ -157,16 +160,16 @@ void RestClientMainWindow::setupLeftPanel()
     pv->addWidget(m_contentBody);
     w->setLayout(pv);
 
-    QTabWidget *box = new QTabWidget();
-    box->addTab(buildParamsWidget(m_params), "Params");
-    box->addTab(buildParamsWidget(m_headers), "Headers");
-    box->addTab(w, "Content to Send");
+    m_leftTabWidget = new QTabWidget();
+    m_leftTabWidget->addTab(buildParamsWidget(m_params), "Params");
+    m_leftTabWidget->addTab(buildParamsWidget(m_headers), "Headers");
+    m_leftTabWidget->addTab(w, "Content to Send");
 
-    box->setCurrentIndex(0);
+    m_leftTabWidget->setCurrentIndex(0);
 
     QDockWidget *dock = new QDockWidget(this);
     dock->setObjectName("Left");
-    dock->setWidget(box);
+    dock->setWidget(m_leftTabWidget);
     dock->setFeatures(QDockWidget::DockWidgetMovable
                       | QDockWidget::DockWidgetFloatable
                       | QDockWidget::DockWidgetVerticalTitleBar);

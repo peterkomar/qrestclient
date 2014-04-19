@@ -34,6 +34,7 @@ class RestHistoryWidget;
 class RequestHistory;
 class QTreeWidgetItem;
 class QMessageBox;
+class QTabWidget;
 
 class RestClientMainWindow : public QMainWindow
 {
@@ -70,6 +71,7 @@ private:
     QTextEdit *m_contentBody;
     QTextEdit *m_responseHeaders;
     RestHistoryWidget *m_historyWidget;
+    QTabWidget *m_leftTabWidget;
 
     RequestHistory *m_history;
     QNetworkReply *m_reply;
