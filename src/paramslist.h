@@ -17,54 +17,23 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef RESTDIALOGIMPL_H
-#define RESTDIALOGIMPL_H
 
-#include <QDialog>
-#include <QNetworkReply>
-#include "ui_form.h"
+#ifndef PARAMSLIST_H
+#define PARAMSLIST_H
 
-class RequestHistory;
+#include <QTreeWidget>
 
-class RestDialogImpl : public QDialog, public Ui::RestDialog
+class ParamsList : public QTreeWidget
 {
     Q_OBJECT
 public:
-    explicit RestDialogImpl(QWidget *parent = 0);
-    ~RestDialogImpl();
+    explicit ParamsList(QWidget * parent = 0);
 
 signals:
 
 public slots:
-    void slotEditHeader();
-    void slotDeleteHeader();
-
-    void slotEditParam();
-    void slotDeleteParam();
-
-    void slotSendRequest();
-
-    void slotHistoryLoad(QTreeWidgetItem*,int);
-    void slotRemoveHistoryItem(QTreeWidgetItem*);
-
-    //Requests slots
-    void slotReplyResponse();
-    void slotReplyFinish();
-    void slotReplyError(QNetworkReply::NetworkError error);
-
-
-private:
-    void initConnections();
-    void loadHistory();
-    void saveHistory(int resposeCode);
-
-    void releaseReplyResources();
-    void waitDialog();
-
-    RequestHistory *m_history;
-    QNetworkReply *m_reply;
-
-    QDialog *m_waitDialog;
+    void slotEditItem();
+    void slotDeleteItem();
 };
 
-#endif // RESTDIALOGIMPL_H
+#endif // PARAMSLIST_H

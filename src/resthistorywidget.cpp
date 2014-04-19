@@ -18,19 +18,62 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <QApplication>
-#include "restclientmainwindow.h"
+#include "resthistorywidget.h"
 
-int main(int argc, char *argv[])
+#include <QMenu>
+#include <QAction>
+#include <QHeaderView>
+#include <QMouseEvent>
+
+RestHistoryWidget::RestHistoryWidget(QWidget *parent) :
+    QTreeWidget(parent)
 {
-    Q_INIT_RESOURCE(application);
-    QApplication app(argc, argv);
-    app.setApplicationDisplayName("QRestClient");
-    RestClientMainWindow *window = new RestClientMainWindow();
-    window->setWindowIcon(QIcon(":/rest.png"));
-    window->show();
-    int code = app.exec();
-    delete window;
+    QStringList params;
+    params << "ID" << "Type" << "URL" << "Response Code" << "Date";
+    setHeaderLabels(params);
 
-    return code;
+    setColumnWidth(0,90);
+    setColumnWidth(2,500);
+
+    setAlternatingRowColors(true);
+    setRootIsDecorated(false);
+    setUniformRowHeights(true);
+    setAllColumnsShowFocus(true);
+    header()->setCascadingSectionResizes(true);
+    header()->setHighlightSections(false);
+    header()->setStretchLastSection(true);
+
+    setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+    QAction *a1 = new QAction("Remove selected items", this);
+    QAction *a2 = new QAction("Clear history", this);
+
+    connect(a1, SIGNAL(triggered()), this, SLOT(slotRemoveItems()));
+    connect(a2, SIGNAL(triggered()), this, SLOT(slotRemoveAllItems()));
+
+    menu = new QMenu;
+    menu->addAction(a1);
+    menu->addSeparator();
+    menu->addAction(a2);
+}
+
+void RestHistoryWidget::mousePressEvent(QMouseEvent *event)
+{
+    if( topLevelItemCount() != 0 ) {
+      if(event->button() == Qt::RightButton) {
+        menu->exec(event->globalPos());
+      }
+    }
+
+    QTreeWidget::mousePressEvent(event);
+}
+
+void RestHistoryWidget::slotRemoveItems()
+{
+    emit emitRemoveItems();
+}
+
+void RestHistoryWidget::slotRemoveAllItems()
+{
+    emit emitRemoveAllItems();
 }

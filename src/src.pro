@@ -10,17 +10,20 @@ MOC_DIR = build
 UI_DIR = build
 RCC_DIR = build
 SOURCES += main.cpp \
-    restdialogimpl.cpp \
     editdlgimpl.cpp \
-    requesthistory.cpp
+    requesthistory.cpp \
+    restclientmainwindow.cpp \
+    paramslist.cpp \
+    resthistorywidget.cpp
 QT += network \
     sql \
     widgets
 HEADERS += \
-    restdialogimpl.h \
     editdlgimpl.h \
-    requesthistory.h
+    requesthistory.h \
+    restclientmainwindow.h \
+    paramslist.h \
+    resthistorywidget.h
 RESOURCES += application.qrc
 FORMS += \
-    form.ui \
     dialog.ui

@@ -18,19 +18,30 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <QApplication>
-#include "restclientmainwindow.h"
+#ifndef RESTHISTORYWIDGET_H
+#define RESTHISTORYWIDGET_H
 
-int main(int argc, char *argv[])
+#include <QTreeWidget>
+
+class QMenu;
+
+class RestHistoryWidget : public QTreeWidget
 {
-    Q_INIT_RESOURCE(application);
-    QApplication app(argc, argv);
-    app.setApplicationDisplayName("QRestClient");
-    RestClientMainWindow *window = new RestClientMainWindow();
-    window->setWindowIcon(QIcon(":/rest.png"));
-    window->show();
-    int code = app.exec();
-    delete window;
+    Q_OBJECT
+public:
+    explicit RestHistoryWidget(QWidget *parent = 0);
 
-    return code;
-}
+signals:
+    void emitRemoveItems();
+    void emitRemoveAllItems();
+
+public slots:
+    void slotRemoveItems();
+    void slotRemoveAllItems();
+
+protected:
+     void mousePressEvent ( QMouseEvent * event );
+     QMenu *menu;
+};
+
+#endif // RESTHISTORYWIDGET_H
