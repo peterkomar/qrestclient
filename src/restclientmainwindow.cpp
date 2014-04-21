@@ -123,6 +123,7 @@ void RestClientMainWindow::setupToolBar()
     QPushButton *m_btn = new QPushButton("Send");
     m_btn->setDefault(true);
     connect(m_btn, SIGNAL(clicked()), this, SLOT(slotSendRequest()));
+    connect(m_editURL, SIGNAL(returnPressed()), this, SLOT(slotSendRequest()));
 
     l->addWidget(lUrl);
     l->addWidget(m_editURL);
