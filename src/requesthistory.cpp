@@ -31,11 +31,18 @@ RequestHistory::~RequestHistory()
 
 void RequestHistory::init()
 {
-    QString path = QCoreApplication::applicationDirPath() + "/rest_history.db";
+    QDir home = QDir::home();
+    if( !home.exists(".qrestclient") ) {
+        if( !home.mkdir(".qrestclient") ) {
+            qDebug() << "Fatal create directory";
+            return;
+        }
+    }
 
-    bool bNeedToCreate = !QFile::exists(path);
-
-    connect(path);
+    home.cd(".qrestclient");
+    QString file = home.absolutePath() + "/history.db";
+    bool bNeedToCreate = !QFile::exists(file);
+    connect(file);
 
     if( bNeedToCreate ) {
         createDataBase();
