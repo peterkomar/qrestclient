@@ -60,9 +60,10 @@ public slots:
 
 
 private:
+    QMessageBox *m_waitDialog;
+
     QTextEdit *m_response;
     QTextEdit *m_errorResponse;
-    QMessageBox *m_waitDialog;
     QLineEdit *m_editURL;
     QComboBox *m_comboRestMethod;
     ParamsList *m_params;
@@ -91,6 +92,9 @@ private:
     void setupBottomPabel();
 
     QWidget* buildParamsWidget(ParamsList *);
+
+    void clearItems(QList<QTreeWidgetItem*>& items);
+    void parseUrlParams();
 };
 
 #endif // RESTCLIENTMAINWINDOW_H

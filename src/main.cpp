@@ -29,8 +29,5 @@ int main(int argc, char *argv[])
     RestClientMainWindow *window = new RestClientMainWindow();
     window->setWindowIcon(QIcon(":/rest.png"));
     window->show();
-    int code = app.exec();
-    delete window;
-
-    return code;
+    return app.exec();
 }

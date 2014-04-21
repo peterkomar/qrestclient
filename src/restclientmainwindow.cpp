@@ -38,6 +38,7 @@
 #include <QStatusBar>
 #include <QMenuBar>
 #include <QSettings>
+#include <QProgressDialog>
 
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -307,11 +308,68 @@ void RestClientMainWindow::releaseReplyResources()
     m_waitDialog = 0;
 }
 
+void RestClientMainWindow::clearItems(QList<QTreeWidgetItem *>& items)
+{
+    int countItems = items.count();
+    QProgressDialog *progress = new QProgressDialog("Removing history...", "", 0, countItems, this);
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setAutoClose(true);
+
+    QPushButton *btn = new QPushButton("Cancel", progress);
+    btn->setDisabled(true);
+    progress->setCancelButton(btn);
+
+    int i = 0;
+    progress->setValue(i);
+    while( !items.isEmpty() ) {
+        progress->setValue(++i);
+        QTreeWidgetItem *item = (QTreeWidgetItem *)items.takeFirst();
+        m_history->deleteHistory(item->text(0).toInt());
+        delete item;
+    }
+
+    progress->setValue(countItems);
+    delete progress;
+}
+
+void RestClientMainWindow::parseUrlParams()
+{
+    QString url = m_editURL->text();
+    int pos = url.indexOf("?");
+    if( pos == -1 ) {
+        return;
+    }
+
+    QString queryString = url.mid(pos+1);
+    url.remove("?"+queryString);
+    m_editURL->setText(url);
+
+   QUrlQuery query(queryString);
+
+   QList<QPair<QString, QString> > items = query.queryItems();
+   for( int i= 0; i < items.size(); i++ ) {
+       QPair<QString, QString> pair = items.at(i);
+       QList<QTreeWidgetItem *> params = m_params->findItems(pair.first, Qt::MatchFixedString, 0);
+       if( params.isEmpty() ) {
+           QTreeWidgetItem *item = new QTreeWidgetItem(m_params);
+           item->setText(0, pair.first);
+           item->setText(1, pair.second);
+       } else {
+           QTreeWidgetItem *w = params.takeFirst();
+           w->setText(1, pair.second);
+       }
+   }
+}
+
 //slots
 void RestClientMainWindow::slotSendRequest()
 {
+    parseUrlParams();
     QString url = m_editURL->text();
-    if( url.isEmpty() || url.left(4) != "http" ) {
+    if( url.isEmpty()
+            || url.left(4) != "http"
+            || url == "http://"
+            || url == "https://" ) {
         QMessageBox::critical(this, "Error", "URL is incorrect");
         return;
     }
@@ -391,9 +449,7 @@ void RestClientMainWindow::slotFinishRequest()
 
 void RestClientMainWindow::slotReplyResponse()
 {
-    QApplication::processEvents();
-    m_response->append(m_reply->readAll());
-    QApplication::processEvents();
+    m_response->setText(m_reply->readAll());
 }
 
 void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
@@ -404,7 +460,7 @@ void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
           error_string += tr("the remote server refused the connection (the server is not accepting requests)");
           break;
 
-      case QNetworkReply::HostNotFoundError :
+       case QNetworkReply::HostNotFoundError :
           error_string += tr("the remote host name was not found (invalid hostname)");
           break;
 
@@ -497,11 +553,7 @@ void RestClientMainWindow::slotHistoryRemoveSelected()
     int res = QMessageBox::question(this, "Confirm Remove", "Are you shure to want to remove selected requests?");
     if( res == QMessageBox::Yes ) {
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        while(!list.isEmpty()) {
-            QTreeWidgetItem *item = (QTreeWidgetItem *)list.takeFirst();
-            m_history->deleteHistory(item->text(0).toInt());
-            delete item;
-        }
+        clearItems(list);
         QApplication::restoreOverrideCursor();
     }
 }
@@ -514,10 +566,14 @@ void RestClientMainWindow::slotHistoryClear()
     }
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    for( int i=0; i < m_historyWidget->topLevelItemCount(); i++ ) {
-      QTreeWidgetItem *item = m_historyWidget->topLevelItem(i);
-      m_history->deleteHistory(item->text(0).toInt());
+
+    int countItems = m_historyWidget->topLevelItemCount();
+    QList<QTreeWidgetItem *> list;
+    for( int i=0; i < countItems; i++ ) {
+        list.append(m_historyWidget->topLevelItem(i));
     }
+
+    clearItems(list);
 
     loadHistory();
 
@@ -526,7 +582,9 @@ void RestClientMainWindow::slotHistoryClear()
 
 void RestClientMainWindow::slotAbout()
 {
-    QMessageBox::about(this, "About", "REST client for WEB services developers.<br/>"
-                       " Alows send GET, POST, PUT, DELETE requests to URL, manage sending params, heders, contets and save request in history.<br/><br/>"
-                       "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>");
+    QMessageBox::about(this, "About", "<b>QRestClient</b> - REST client for WEB services developers.<br/>"
+                       "<br/> Supports sending GET, POST, PUT, DELETE requests to URL, managing sending params, heders, contets and logging sended requests.<br/><br/>"
+                       "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>"
+                       "<br/><br/><b>License:</b> GPL v2"
+                       "<br/> 2007 - 2014");
 }
