@@ -31,11 +31,18 @@ RequestHistory::~RequestHistory()
 
 void RequestHistory::init()
 {
-    QString path = QCoreApplication::applicationDirPath() + "/rest_history.db";
+    QDir home = QDir::home();
+    if( !home.exists(".qrestclient") ) {
+        if( !home.mkdir(".qrestclient") ) {
+            qDebug() << "Fatal create directory";
+            return;
+        }
+    }
 
-    bool bNeedToCreate = !QFile::exists(path);
-
-    connect(path);
+    home.cd(".qrestclient");
+    QString file = home.absolutePath() + "/history.db";
+    bool bNeedToCreate = !QFile::exists(file);
+    connect(file);
 
     if( bNeedToCreate ) {
         createDataBase();
@@ -75,7 +82,9 @@ void RequestHistory::createDataBase()
                 "code int,"
                 "type varchar,"
                 "url varchar,"
-                "response mediumtext"
+                "response mediumtext,"
+                "error varchar,"
+                "headers mediumtext"
     ")"
     << "CREATE TABLE requests_params ("
                 "request_id int,"
@@ -102,7 +111,7 @@ void RequestHistory::createDataBase()
     }
 }
 
-int RequestHistory::addRequest(const QString &url, const QString &method, int responseCode, const QString& response)
+int RequestHistory::addRequest(const QString &url, const QString &method, int responseCode, const QString& response,  const QString& error, const QString& headers)
 {
     QSqlQuery q(m_database);
 
@@ -120,8 +129,8 @@ int RequestHistory::addRequest(const QString &url, const QString &method, int re
     ++index;
 
     q.prepare(""
-     "INSERT INTO requests (id, date, code, type, url, response)"
-     " VALUES (:id, :date, :code, :type, :url, :response)"
+     "INSERT INTO requests (id, date, code, type, url, response, error, headers)"
+     " VALUES (:id, :date, :code, :type, :url, :response, :error, :headers)"
     );
 
     q.bindValue(":id", index);
@@ -130,6 +139,8 @@ int RequestHistory::addRequest(const QString &url, const QString &method, int re
     q.bindValue(":type", method);
     q.bindValue(":url", url);
     q.bindValue(":response", response);
+    q.bindValue(":error", error);
+    q.bindValue(":headers", headers);
 
     if( !q.exec() ) {
         qDebug() << "Error execution query: " << q.lastQuery() << " Error: " << q.lastError();
