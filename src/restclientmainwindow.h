@@ -58,6 +58,9 @@ public slots:
 
     void slotAbout();
 
+protected:
+    void closeEvent(QCloseEvent *event);
+
 
 private:
     QMessageBox *m_waitDialog;

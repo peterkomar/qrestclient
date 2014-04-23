@@ -39,6 +39,7 @@
 #include <QMenuBar>
 #include <QSettings>
 #include <QProgressDialog>
+#include <QCloseEvent>
 
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -64,10 +65,16 @@ RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
 
 RestClientMainWindow::~RestClientMainWindow()
 {
+    delete m_history;
+}
+
+void RestClientMainWindow::closeEvent(QCloseEvent *event)
+{
     QSettings setting("UDL", "qrestclient");
     setting.setValue("gui/state", saveState());
     setting.setValue("gui/tab_index", m_leftTabWidget->currentIndex());
-    delete m_history;
+
+    event->accept();
 }
 
 void RestClientMainWindow::_gui()
