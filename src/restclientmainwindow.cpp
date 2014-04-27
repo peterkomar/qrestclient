@@ -457,7 +457,7 @@ void RestClientMainWindow::slotFinishRequest()
 
 void RestClientMainWindow::slotReplyResponse()
 {
-    m_response->setText(m_reply->readAll());
+    m_response->append(m_reply->readAll());
 }
 
 void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
