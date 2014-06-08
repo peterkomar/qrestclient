@@ -14,7 +14,9 @@ SOURCES += main.cpp \
     requesthistory.cpp \
     restclientmainwindow.cpp \
     paramslist.cpp \
-    resthistorywidget.cpp
+    resthistorywidget.cpp \
+    qjsonview.cpp \
+    responsewidget.cpp
 QT += network \
     sql \
     widgets
@@ -23,7 +25,9 @@ HEADERS += \
     requesthistory.h \
     restclientmainwindow.h \
     paramslist.h \
-    resthistorywidget.h
+    resthistorywidget.h \
+    qjsonview.h \
+    responsewidget.h
 RESOURCES += application.qrc
 FORMS += \
     dialog.ui

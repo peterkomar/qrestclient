@@ -22,6 +22,7 @@
 #include "paramslist.h"
 #include "resthistorywidget.h"
 #include "requesthistory.h"
+#include "responsewidget.h"
 
 #include <QTextEdit>
 #include <QVBoxLayout>
@@ -83,10 +84,7 @@ void RestClientMainWindow::_gui()
 
      QVBoxLayout *l = new QVBoxLayout;
 
-     m_response = new QTextEdit();
-     m_response->setText("Response:");
-     m_response->setReadOnly(true);
-     m_response->setAcceptRichText(false);
+     m_response = new ResponseWidget();
      m_response->setMinimumSize(500, 205);
      l->addWidget(m_response);
 
@@ -254,7 +252,7 @@ void RestClientMainWindow::saveHistory(int code)
     int requestId = m_history->addRequest(url,
                                           m_comboRestMethod->currentText(),
                                           code,
-                                          m_response->toPlainText(),
+                                          m_response->toText(),
                                           m_errorResponse->toPlainText(),
                                           m_responseHeaders->toHtml());
 
@@ -446,6 +444,11 @@ void RestClientMainWindow::slotFinishRequest()
 
     m_responseHeaders->clear();
     for (int i = 0; i < headers.size(); ++i) {
+
+        if( headers.at(i) == "Content-Type" ) {
+            m_response->render(m_reply->rawHeader(headers.at(i)));
+        }
+
         m_responseHeaders->append("<b>"+headers.at(i) + "</b>: " + m_reply->rawHeader(headers.at(i)));
     }
 
@@ -497,9 +500,17 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
         return;
     }
 
+    QString headers = q.value(7).toString();
+    QString type = "text";
+    int pos = 0;
+    if((pos = headers.indexOf("Content-Type")) != -1) {
+        int end = headers.indexOf("<", pos+1);
+        type = headers.mid(pos+20, end-pos+5).trimmed();
+    }
+
     m_editURL->setText(q.value(4).toString());
     m_comboRestMethod->setCurrentText(q.value(3).toString());
-    m_response->setText(q.value(5).toString());
+    m_response->setText(q.value(5).toString(), type);
     m_errorResponse->setText(q.value(6).toString());
     m_responseHeaders->setText(q.value(7).toString());
 

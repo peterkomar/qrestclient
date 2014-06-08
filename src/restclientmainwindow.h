@@ -35,6 +35,7 @@ class RequestHistory;
 class QTreeWidgetItem;
 class QMessageBox;
 class QTabWidget;
+class ResponseWidget;
 
 class RestClientMainWindow : public QMainWindow
 {
@@ -65,7 +66,7 @@ protected:
 private:
     QMessageBox *m_waitDialog;
 
-    QTextEdit *m_response;
+    ResponseWidget *m_response;
     QTextEdit *m_errorResponse;
     QLineEdit *m_editURL;
     QComboBox *m_comboRestMethod;
