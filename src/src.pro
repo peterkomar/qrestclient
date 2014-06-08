@@ -2,7 +2,7 @@ TEMPLATE = app
 CONFIG += warn_on \
     thread \
     qt \
-    debug
+    debug    #- uncoment for debug
     #release #- uncoment for relese
 TARGET = ../bin/qrestclient
 OBJECTS_DIR = build
