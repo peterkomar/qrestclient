@@ -23,8 +23,6 @@
 #include <QJsonDocument>
 #include <QHeaderView>
 #include <QJsonArray>
-#include <QDebug>
-#include <QStyleFactory>
 
 QJsonView::QJsonView(QWidget *parent) :
     QTreeWidget(parent)

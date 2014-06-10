@@ -4,7 +4,6 @@ CONFIG += warn_on \
     qt \
     #debug    #- uncoment for debug
     release #- uncoment for relese
-
 TARGET = ../bin/qrestclient
 OBJECTS_DIR = build
 MOC_DIR = build
