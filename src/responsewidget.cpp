@@ -52,7 +52,7 @@ void ResponseWidget::render(const QString& texType)
 {
     try{
 
-        if( texType == "application/json" ) {
+        if( texType.indexOf("application/json") > -1 ) {
             m_jsonView->setJson(toText());
             setCurrentIndex(1);
             return;
