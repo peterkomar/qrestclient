@@ -38,7 +38,7 @@ ResponseWidget::ResponseWidget(QWidget *parent) :
 }
 
 void ResponseWidget::setText(const QString& text, const QString& textType)
-{
+{   
     m_textView->setText(text);
     render(textType);
 }
@@ -56,6 +56,8 @@ void ResponseWidget::render(const QString& texType)
             m_jsonView->setJson(toText());
             setCurrentIndex(1);
             return;
+        } else {
+            setCurrentIndex(0);
         }
 
     } catch( ... ) {
