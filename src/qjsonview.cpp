@@ -39,9 +39,6 @@ QJsonView::QJsonView(QWidget *parent) :
     header()->setCascadingSectionResizes(true);
     header()->setHighlightSections(false);
     header()->setStretchLastSection(true);
-
-    connect(this, SIGNAL(itemExpanded(QTreeWidgetItem*)), this, SLOT(slotItemExpanded(QTreeWidgetItem*)));
-    connect(this, SIGNAL(itemCollapsed(QTreeWidgetItem*)), this, SLOT(slotItemCollapsed(QTreeWidgetItem*)));
 }
 
 void QJsonView::setJson(const QString &text)
@@ -75,8 +72,9 @@ void QJsonView::buildArray(const QString& name, const QJsonArray &arr, QTreeWidg
                 parent,
                 TYPE_ITEM_ARRAY
                 );
+    int i = 0;
     foreach (QJsonValue var, arr) {
-        addItem("", var, item);
+        addItem(QString("[%1]").arg(i++), var, item);
     }
 }
 
@@ -97,44 +95,6 @@ void QJsonView::addItem(const QString& name, const QJsonValue& val, QTreeWidgetI
         item = createItem(name, parent);
         item->setText(1, val.toBool()? "True" : "False");
     }
-}
-
-void QJsonView::slotItemExpanded(QTreeWidgetItem * item)
-{
-    if( item->type() != TYPE_ITEM_ARRAY && item->type() != TYPE_ITEM_OBJECT) {
-        return;
-    }
-
-    QTreeWidgetItem *next = 0;
-    if( item->parent() ) {
-        next = new QTreeWidgetItem(item->parent(), item);
-    } else {
-        next = new QTreeWidgetItem(this, item);
-    }
-
-    if(  item->type() == TYPE_ITEM_ARRAY ) {
-        item->setText(0, item->text(0).remove("]"));
-        next->setText(0, "]");
-    } else {
-        item->setText(0, item->text(0).remove("...}"));
-        next->setText(0, "}");
-    }
-}
-
-void QJsonView::slotItemCollapsed(QTreeWidgetItem * item)
-{
-    if( item->type() != TYPE_ITEM_ARRAY && item->type() != TYPE_ITEM_OBJECT) {
-        return;
-    }
-
-    if(  item->type() == TYPE_ITEM_ARRAY ) {
-        item->setText(0, item->text(0) + "]");
-    } else {
-        item->setText(0, item->text(0) + "...}");
-    }
-
-    QTreeWidgetItem *below = itemBelow(item);
-    delete below;
 }
 
 QTreeWidgetItem* QJsonView::createItem(const QString& name, QTreeWidgetItem *parent, int type)

@@ -34,10 +34,6 @@ public:
 
      void setJson(const QString& text);
 
-public slots:
-     void slotItemExpanded(QTreeWidgetItem * item);
-     void slotItemCollapsed(QTreeWidgetItem * item);
-
 private:
     enum{TYPE_ITEM_OBJECT = 1, TYPE_ITEM_ARRAY};
     void buildObject(const QString& name, const QJsonObject& object, QTreeWidgetItem* parent = 0);
