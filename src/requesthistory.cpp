@@ -219,7 +219,8 @@ bool RequestHistory::deleteHistory(int requestId)
     queries << "DELETE FROM requests WHERE id = :id"
             << "DELETE FROM requests_params WHERE request_id = :id"
             << "DELETE FROM request_headers WHERE request_id = :id"
-            << "DELETE FROM request_raw WHERE request_id = :id";
+            << "DELETE FROM request_raw WHERE request_id = :id"
+            << "vacuum";
 
     QStringList::const_iterator constIterator;
     for (constIterator = queries.constBegin(); constIterator != queries.constEnd(); ++constIterator) {
