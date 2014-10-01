@@ -57,7 +57,11 @@ public slots:
     void slotHistoryRemoveSelected();
     void slotHistoryClear();
 
+    void slotViewJson();
+    void slotViewText();
     void slotAbout();
+
+    void slotNotifyMenuView(int pos);
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -83,6 +87,10 @@ private:
 
     QTime m_time;
 
+    QAction *m_jsonView;
+    QAction *m_textView;
+
+
     void loadHistory();
     void saveHistory(int resposeCode);
 
@@ -94,6 +102,7 @@ private:
     void setupLeftPanel();
     void setupRightPanel();
     void setupBottomPabel();
+    void setupMenu();
 
     QWidget* buildParamsWidget(ParamsList *);
 

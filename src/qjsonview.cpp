@@ -106,6 +106,7 @@ QTreeWidgetItem* QJsonView::createItem(const QString& name, QTreeWidgetItem *par
         item = new QTreeWidgetItem(this, type);
     }
     item->setText(0, name);
+    item->setFlags(item->flags() | Qt::ItemIsEditable);
     expandItem(item);
 
     return item;

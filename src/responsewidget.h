@@ -33,7 +33,7 @@ public:
     explicit ResponseWidget(QWidget *parent = 0);
     void setText(const QString& text, const QString& textType);
     void append(const QString& text);
-    void render(const QString& texType);
+    int render(const QString& texType);
 
     void clear();
     QString toText();
