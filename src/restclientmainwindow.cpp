@@ -120,8 +120,8 @@ void RestClientMainWindow::setupMenu()
     viewGroup->addAction(m_textView);
 
     m_jsonView->setCheckable(true);
-    m_jsonView->setChecked(true);
     m_textView->setCheckable(true);
+    m_textView->setChecked(true);
 
     view->addAction(m_jsonView);
     view->addAction(m_textView);
