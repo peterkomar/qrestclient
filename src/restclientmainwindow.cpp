@@ -84,7 +84,7 @@ void RestClientMainWindow::_gui()
 
      QVBoxLayout *l = new QVBoxLayout;
 
-     m_response = new ResponseWidget();
+     m_response = new ResponseWidget(this);
      m_response->setMinimumSize(500, 205);
      l->addWidget(m_response);
 
@@ -104,11 +104,36 @@ void RestClientMainWindow::_gui()
      setupLeftPanel();
      setupRightPanel();
      setupBottomPabel();
+     setupMenu();
+}
 
-     QAction *a = new QAction("About", this);
-     QMenu *m = menuBar()->addMenu("Help");
-     m->addAction(a);
-     connect(a, SIGNAL(triggered()), this, SLOT(slotAbout()));
+void RestClientMainWindow::setupMenu()
+{
+    QMenu *view = menuBar()->addMenu("View");
+
+
+    m_jsonView = new QAction("Json", this);
+    m_textView = new QAction("Text", this);
+
+    QActionGroup *viewGroup = new QActionGroup(this);
+    viewGroup->addAction(m_jsonView);
+    viewGroup->addAction(m_textView);
+
+    m_jsonView->setCheckable(true);
+    m_textView->setCheckable(true);
+    m_textView->setChecked(true);
+
+    view->addAction(m_jsonView);
+    view->addAction(m_textView);
+
+    connect(m_jsonView, SIGNAL(triggered()), this, SLOT(slotViewJson()));
+    connect(m_textView, SIGNAL(triggered()), this, SLOT(slotViewText()));
+
+    QAction *a = new QAction("About", this);
+    QMenu *m = menuBar()->addMenu("Help");
+    m->addAction(a);
+    connect(a, SIGNAL(triggered()), this, SLOT(slotAbout()));
+
 }
 
 void RestClientMainWindow::setupToolBar()
@@ -446,7 +471,10 @@ void RestClientMainWindow::slotFinishRequest()
     for (int i = 0; i < headers.size(); ++i) {
 
         if( headers.at(i) == "Content-Type" ) {
-            m_response->render(m_reply->rawHeader(headers.at(i)));
+            switch(m_response->render(m_reply->rawHeader(headers.at(i)))){
+            case 0: m_textView->setChecked(true); break;
+            case 1: m_jsonView->setChecked(true); break;
+            }
         }
 
         m_responseHeaders->append("<b>"+headers.at(i) + "</b>: " + m_reply->rawHeader(headers.at(i)));
@@ -597,6 +625,27 @@ void RestClientMainWindow::slotHistoryClear()
     loadHistory();
 
     QApplication::restoreOverrideCursor();
+}
+
+void RestClientMainWindow::slotViewJson()
+{
+    m_response->setCurrentIndex(1);
+}
+
+void RestClientMainWindow::slotViewText()
+{
+    m_response->setCurrentIndex(0);
+}
+
+void RestClientMainWindow::slotNotifyMenuView(int pos)
+{
+    switch (pos) {
+    case 0: m_textView->setChecked(true);
+        break;
+    case 1: m_jsonView->setChecked(true);
+    default:
+        break;
+    }
 }
 
 void RestClientMainWindow::slotAbout()

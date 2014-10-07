@@ -48,21 +48,23 @@ void ResponseWidget::append(const QString& text)
     m_textView->append(text);
 }
 
-void ResponseWidget::render(const QString& texType)
+int ResponseWidget::render(const QString& texType)
 {
+    int index = 0;
     try{
 
         if( texType.indexOf("application/json") > -1 ) {
             m_jsonView->setJson(toText());
-            setCurrentIndex(1);
-            return;
-        } else {
-            setCurrentIndex(0);
+            index = 1;
         }
 
     } catch( ... ) {
-        setCurrentIndex(0);
+        index = 0;
     }
+
+    setCurrentIndex(index);
+
+    return index;
 }
 
 QString ResponseWidget::toText()
