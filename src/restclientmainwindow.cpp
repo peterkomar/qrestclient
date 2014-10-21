@@ -41,6 +41,7 @@
 #include <QSettings>
 #include <QProgressDialog>
 #include <QCloseEvent>
+#include <QShortcut>
 
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -152,8 +153,13 @@ void RestClientMainWindow::setupToolBar()
 
     QPushButton *m_btn = new QPushButton("Send");
     m_btn->setDefault(true);
+    QShortcut *shortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_R), this);
+
+
     connect(m_btn, SIGNAL(clicked()), this, SLOT(slotSendRequest()));
     connect(m_editURL, SIGNAL(returnPressed()), this, SLOT(slotSendRequest()));
+    connect(shortcut, SIGNAL(activated()), this, SLOT(slotSendRequest()));
+
 
     l->addWidget(lUrl);
     l->addWidget(m_editURL);
