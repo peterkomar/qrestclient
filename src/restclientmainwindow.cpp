@@ -152,6 +152,7 @@ void RestClientMainWindow::setupToolBar()
     m_comboRestMethod->addItems(items);
 
     QPushButton *m_btn = new QPushButton("Send");
+    m_btn->setToolTip(tr("To run request Ctrl+R"));
     m_btn->setDefault(true);
     QShortcut *shortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_R), this);
 
@@ -659,5 +660,6 @@ void RestClientMainWindow::slotAbout()
                        "<br/> Supports sending GET, POST, PUT, DELETE requests to URL, managing sending params, heders, contets and logging sended requests.<br/><br/>"
                        "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>"
                        "<br/><br/><b>License:</b> GPL v2"
-                       "<br/> 2007 - 2014");
+                       "<br/> 2007 - 2014"
+                       "<br/><br/><b>Build</b>: " + QString::number(QDateTime::currentMSecsSinceEpoch()));
 }
