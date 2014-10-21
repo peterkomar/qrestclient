@@ -31,7 +31,7 @@ class ResponseWidget : public QStackedWidget
     Q_OBJECT
 public:
     explicit ResponseWidget(QWidget *parent = 0);
-    void setText(const QString& text, const QString& textType);
+    int setText(const QString& text, const QString& textType);
     void append(const QString& text);
     int render(const QString& texType);
 
