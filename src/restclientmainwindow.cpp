@@ -41,6 +41,7 @@
 #include <QSettings>
 #include <QProgressDialog>
 #include <QCloseEvent>
+#include <QShortcut>
 
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -151,9 +152,15 @@ void RestClientMainWindow::setupToolBar()
     m_comboRestMethod->addItems(items);
 
     QPushButton *m_btn = new QPushButton("Send");
+    m_btn->setToolTip(tr("To run request Ctrl+R"));
     m_btn->setDefault(true);
+    QShortcut *shortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_R), this);
+
+
     connect(m_btn, SIGNAL(clicked()), this, SLOT(slotSendRequest()));
     connect(m_editURL, SIGNAL(returnPressed()), this, SLOT(slotSendRequest()));
+    connect(shortcut, SIGNAL(activated()), this, SLOT(slotSendRequest()));
+
 
     l->addWidget(lUrl);
     l->addWidget(m_editURL);
@@ -471,10 +478,7 @@ void RestClientMainWindow::slotFinishRequest()
     for (int i = 0; i < headers.size(); ++i) {
 
         if( headers.at(i) == "Content-Type" ) {
-            switch(m_response->render(m_reply->rawHeader(headers.at(i)))){
-            case 0: m_textView->setChecked(true); break;
-            case 1: m_jsonView->setChecked(true); break;
-            }
+            slotNotifyMenuView(m_response->render(m_reply->rawHeader(headers.at(i))));
         }
 
         m_responseHeaders->append("<b>"+headers.at(i) + "</b>: " + m_reply->rawHeader(headers.at(i)));
@@ -538,9 +542,11 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
 
     m_editURL->setText(q.value(4).toString());
     m_comboRestMethod->setCurrentText(q.value(3).toString());
-    m_response->setText(q.value(5).toString(), type);
+    int type_view = m_response->setText(q.value(5).toString(), type);
     m_errorResponse->setText(q.value(6).toString());
     m_responseHeaders->setText(q.value(7).toString());
+
+    slotNotifyMenuView(type_view);
 
     QTreeWidgetItem *i = 0;
     //load params
@@ -654,5 +660,6 @@ void RestClientMainWindow::slotAbout()
                        "<br/> Supports sending GET, POST, PUT, DELETE requests to URL, managing sending params, heders, contets and logging sended requests.<br/><br/>"
                        "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>"
                        "<br/><br/><b>License:</b> GPL v2"
-                       "<br/> 2007 - 2014");
+                       "<br/> 2007 - 2014"
+                       "<br/><br/><b>Build</b>: " + QString::number(QDateTime::currentMSecsSinceEpoch()));
 }

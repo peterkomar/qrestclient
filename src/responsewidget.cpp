@@ -37,10 +37,10 @@ ResponseWidget::ResponseWidget(QWidget *parent) :
     setCurrentIndex(0);
 }
 
-void ResponseWidget::setText(const QString& text, const QString& textType)
+int ResponseWidget::setText(const QString& text, const QString& textType)
 {   
     m_textView->setText(text);
-    render(textType);
+    return render(textType);
 }
 
 void ResponseWidget::append(const QString& text)
