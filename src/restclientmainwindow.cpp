@@ -81,7 +81,7 @@ void RestClientMainWindow::closeEvent(QCloseEvent *event)
 
 void RestClientMainWindow::_gui()
 {
-     setWindowTitle("QRestClient v1.0");
+     setWindowTitle("QRestClient");
 
      QVBoxLayout *l = new QVBoxLayout;
 
@@ -112,7 +112,6 @@ void RestClientMainWindow::setupMenu()
 {
     QMenu *view = menuBar()->addMenu("View");
 
-
     m_jsonView = new QAction("Json", this);
     m_textView = new QAction("Text", this);
 
@@ -134,7 +133,6 @@ void RestClientMainWindow::setupMenu()
     QMenu *m = menuBar()->addMenu("Help");
     m->addAction(a);
     connect(a, SIGNAL(triggered()), this, SLOT(slotAbout()));
-
 }
 
 void RestClientMainWindow::setupToolBar()
@@ -477,8 +475,8 @@ void RestClientMainWindow::slotFinishRequest()
     m_responseHeaders->clear();
     for (int i = 0; i < headers.size(); ++i) {
 
-        if( headers.at(i) == "Content-Type" ) {
-            slotNotifyMenuView(m_response->render(m_reply->rawHeader(headers.at(i))));
+        if( headers.at(i) == "Content-Type") {
+            renderContentType(m_reply->rawHeader(headers.at(i)));
         }
 
         m_responseHeaders->append("<b>"+headers.at(i) + "</b>: " + m_reply->rawHeader(headers.at(i)));
@@ -542,11 +540,11 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
 
     m_editURL->setText(q.value(4).toString());
     m_comboRestMethod->setCurrentText(q.value(3).toString());
-    int type_view = m_response->setText(q.value(5).toString(), type);
+    m_response->setText(q.value(5).toString());
     m_errorResponse->setText(q.value(6).toString());
     m_responseHeaders->setText(q.value(7).toString());
 
-    slotNotifyMenuView(type_view);
+    renderContentType(type);
 
     QTreeWidgetItem *i = 0;
     //load params
@@ -635,6 +633,7 @@ void RestClientMainWindow::slotHistoryClear()
 
 void RestClientMainWindow::slotViewJson()
 {
+    m_response->render(ResponseWidget::TYPE_JSON);
     m_response->setCurrentIndex(1);
 }
 
@@ -652,6 +651,16 @@ void RestClientMainWindow::slotNotifyMenuView(int pos)
     default:
         break;
     }
+}
+
+void RestClientMainWindow::renderContentType(const QString &contentType)
+{
+    int type = 0;
+    if( contentType.indexOf("application/json") != -1) {
+        type = m_response->render(ResponseWidget::TYPE_JSON);
+    }
+
+    slotNotifyMenuView(type);
 }
 
 void RestClientMainWindow::slotAbout()

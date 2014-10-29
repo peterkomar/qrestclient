@@ -37,10 +37,9 @@ ResponseWidget::ResponseWidget(QWidget *parent) :
     setCurrentIndex(0);
 }
 
-int ResponseWidget::setText(const QString& text, const QString& textType)
+void ResponseWidget::setText(const QString& text)
 {   
     m_textView->setText(text);
-    return render(textType);
 }
 
 void ResponseWidget::append(const QString& text)
@@ -48,18 +47,24 @@ void ResponseWidget::append(const QString& text)
     m_textView->append(text);
 }
 
-int ResponseWidget::render(const QString& texType)
+ResponseWidget::type ResponseWidget::render(type typeResponse)
 {
-    int index = 0;
+    type index = TYPE_TEXT;
     try{
 
-        if( texType.indexOf("application/json") > -1 ) {
-            m_jsonView->setJson(toText());
-            index = 1;
+        switch( typeResponse ) {
+
+            case TYPE_JSON : m_jsonView->setJson(toText());
+                             index = TYPE_JSON;
+                             break;
+
+            case TYPE_TEXT: index = TYPE_TEXT;
+                            break;
+
         }
 
     } catch( ... ) {
-        index = 0;
+        index = TYPE_TEXT;
     }
 
     setCurrentIndex(index);

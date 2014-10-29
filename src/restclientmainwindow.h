@@ -108,6 +108,8 @@ private:
 
     void clearItems(QList<QTreeWidgetItem*>& items);
     void parseUrlParams();
+
+    void renderContentType(const QString& contentType);
 };
 
 #endif // RESTCLIENTMAINWINDOW_H
