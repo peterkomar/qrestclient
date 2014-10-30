@@ -94,6 +94,9 @@ void QJsonView::addItem(const QString& name, const QJsonValue& val, QTreeWidgetI
     } else if( val.isBool() ) {
         item = createItem(name, parent);
         item->setText(1, val.toBool()? "True" : "False");
+    } else if( val.isNull() ) {
+        item = createItem(name, parent);
+        item->setText(1, "null");
     }
 }
 
