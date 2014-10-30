@@ -633,21 +633,25 @@ void RestClientMainWindow::slotHistoryClear()
 
 void RestClientMainWindow::slotViewJson()
 {
-    m_response->render(ResponseWidget::TYPE_JSON);
-    m_response->setCurrentIndex(1);
+    ResponseWidget::type type = m_response->render(ResponseWidget::TYPE_JSON);
+
+    if( type != ResponseWidget::TYPE_JSON ) {
+        QMessageBox::critical(this, tr("Error parese"), tr("Error parsing JSON"));
+        slotNotifyMenuView(type);
+    }
 }
 
 void RestClientMainWindow::slotViewText()
 {
-    m_response->setCurrentIndex(0);
+    m_response->setCurrentIndex(ResponseWidget::TYPE_TEXT);
 }
 
 void RestClientMainWindow::slotNotifyMenuView(int pos)
 {
     switch (pos) {
-    case 0: m_textView->setChecked(true);
+    case ResponseWidget::TYPE_TEXT: m_textView->setChecked(true);
         break;
-    case 1: m_jsonView->setChecked(true);
+    case ResponseWidget::TYPE_JSON: m_jsonView->setChecked(true);
     default:
         break;
     }
