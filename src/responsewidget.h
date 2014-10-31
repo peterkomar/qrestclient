@@ -44,6 +44,8 @@ public:
 private:
     QTextEdit *m_textView;
     QJsonView *m_jsonView;
+
+    QString m_text;
 };
 
 #endif // RESPONSEWIDGET_H

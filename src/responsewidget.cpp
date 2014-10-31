@@ -22,6 +22,7 @@
 #include "qjsonview.h"
 
 #include <QTextEdit>
+#include <QDebug>
 
 ResponseWidget::ResponseWidget(QWidget *parent) :
     QStackedWidget(parent)
@@ -35,36 +36,42 @@ ResponseWidget::ResponseWidget(QWidget *parent) :
     addWidget(m_jsonView);
 
     setCurrentIndex(0);
+
+    m_text = "";
 }
 
 void ResponseWidget::setText(const QString& text)
 {   
-    m_textView->setText(text);
+    m_text = text;
 }
 
 void ResponseWidget::append(const QString& text)
-{
-    m_textView->append(text);
+{        
+    m_text += text;
 }
 
 ResponseWidget::type ResponseWidget::render(type typeResponse)
 {
     type index = TYPE_TEXT;
+    QString body = m_text;
     try{
 
         switch( typeResponse ) {
 
-            case TYPE_JSON : m_jsonView->setJson(toText());
+            case TYPE_JSON : body.replace(">", "&gt;").replace("<", "&lt;");
+                             m_jsonView->setJson(body);
                              index = TYPE_JSON;
                              break;
 
             case TYPE_TEXT: index = TYPE_TEXT;
+                            m_textView->setText(body);
                             break;
 
         }
 
     } catch( ... ) {
         index = TYPE_TEXT;
+        m_textView->setText(body);
     }
 
     setCurrentIndex(index);
@@ -74,12 +81,13 @@ ResponseWidget::type ResponseWidget::render(type typeResponse)
 
 QString ResponseWidget::toText()
 {
-    return m_textView->toPlainText();
+    return m_text;
 }
 
 void ResponseWidget::clear()
 {
     m_textView->clear();
     m_jsonView->clear();
+    m_text.clear();
 }
 

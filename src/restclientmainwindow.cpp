@@ -472,11 +472,12 @@ void RestClientMainWindow::slotFinishRequest()
     QList<QByteArray> headers = m_reply->rawHeaderList();
     m_reply->close();
 
+    QString contetType;
     m_responseHeaders->clear();
     for (int i = 0; i < headers.size(); ++i) {
 
         if( headers.at(i) == "Content-Type") {
-            renderContentType(m_reply->rawHeader(headers.at(i)));
+            contetType = m_reply->rawHeader(headers.at(i));
         }
 
         m_responseHeaders->append("<b>"+headers.at(i) + "</b>: " + m_reply->rawHeader(headers.at(i)));
@@ -486,6 +487,7 @@ void RestClientMainWindow::slotFinishRequest()
 
     saveHistory(200);
     releaseReplyResources();
+    renderContentType(contetType);
 }
 
 void RestClientMainWindow::slotReplyResponse()
@@ -514,6 +516,8 @@ void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
     releaseReplyResources();
 
     saveHistory(error);
+
+    renderContentType("");
 }
 
 
@@ -643,7 +647,8 @@ void RestClientMainWindow::slotViewJson()
 
 void RestClientMainWindow::slotViewText()
 {
-    m_response->setCurrentIndex(ResponseWidget::TYPE_TEXT);
+    ResponseWidget::type type = m_response->render(ResponseWidget::TYPE_TEXT);
+    slotNotifyMenuView(type);
 }
 
 void RestClientMainWindow::slotNotifyMenuView(int pos)
@@ -662,6 +667,8 @@ void RestClientMainWindow::renderContentType(const QString &contentType)
     int type = 0;
     if( contentType.indexOf("application/json") != -1) {
         type = m_response->render(ResponseWidget::TYPE_JSON);
+    } else {
+        type = m_response->render(ResponseWidget::TYPE_TEXT);
     }
 
     slotNotifyMenuView(type);
