@@ -81,7 +81,7 @@ void RestClientMainWindow::closeEvent(QCloseEvent *event)
 
 void RestClientMainWindow::_gui()
 {
-     setWindowTitle("QRestClient v1.0");
+     setWindowTitle("QRestClient");
 
      QVBoxLayout *l = new QVBoxLayout;
 
@@ -112,7 +112,6 @@ void RestClientMainWindow::setupMenu()
 {
     QMenu *view = menuBar()->addMenu("View");
 
-
     m_jsonView = new QAction("Json", this);
     m_textView = new QAction("Text", this);
 
@@ -134,7 +133,6 @@ void RestClientMainWindow::setupMenu()
     QMenu *m = menuBar()->addMenu("Help");
     m->addAction(a);
     connect(a, SIGNAL(triggered()), this, SLOT(slotAbout()));
-
 }
 
 void RestClientMainWindow::setupToolBar()
@@ -474,11 +472,12 @@ void RestClientMainWindow::slotFinishRequest()
     QList<QByteArray> headers = m_reply->rawHeaderList();
     m_reply->close();
 
+    QString contetType;
     m_responseHeaders->clear();
     for (int i = 0; i < headers.size(); ++i) {
 
-        if( headers.at(i) == "Content-Type" ) {
-            slotNotifyMenuView(m_response->render(m_reply->rawHeader(headers.at(i))));
+        if( headers.at(i) == "Content-Type") {
+            contetType = m_reply->rawHeader(headers.at(i));
         }
 
         m_responseHeaders->append("<b>"+headers.at(i) + "</b>: " + m_reply->rawHeader(headers.at(i)));
@@ -488,6 +487,7 @@ void RestClientMainWindow::slotFinishRequest()
 
     saveHistory(200);
     releaseReplyResources();
+    renderContentType(contetType);
 }
 
 void RestClientMainWindow::slotReplyResponse()
@@ -516,6 +516,8 @@ void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
     releaseReplyResources();
 
     saveHistory(error);
+
+    renderContentType("");
 }
 
 
@@ -542,11 +544,11 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
 
     m_editURL->setText(q.value(4).toString());
     m_comboRestMethod->setCurrentText(q.value(3).toString());
-    int type_view = m_response->setText(q.value(5).toString(), type);
+    m_response->setText(q.value(5).toString());
     m_errorResponse->setText(q.value(6).toString());
     m_responseHeaders->setText(q.value(7).toString());
 
-    slotNotifyMenuView(type_view);
+    renderContentType(type);
 
     QTreeWidgetItem *i = 0;
     //load params
@@ -635,23 +637,41 @@ void RestClientMainWindow::slotHistoryClear()
 
 void RestClientMainWindow::slotViewJson()
 {
-    m_response->setCurrentIndex(1);
+    ResponseWidget::type type = m_response->render(ResponseWidget::TYPE_JSON);
+
+    if( type != ResponseWidget::TYPE_JSON ) {
+        QMessageBox::critical(this, tr("Error parese"), tr("Error parsing JSON"));
+        slotNotifyMenuView(type);
+    }
 }
 
 void RestClientMainWindow::slotViewText()
 {
-    m_response->setCurrentIndex(0);
+    ResponseWidget::type type = m_response->render(ResponseWidget::TYPE_TEXT);
+    slotNotifyMenuView(type);
 }
 
 void RestClientMainWindow::slotNotifyMenuView(int pos)
 {
     switch (pos) {
-    case 0: m_textView->setChecked(true);
+    case ResponseWidget::TYPE_TEXT: m_textView->setChecked(true);
         break;
-    case 1: m_jsonView->setChecked(true);
+    case ResponseWidget::TYPE_JSON: m_jsonView->setChecked(true);
     default:
         break;
     }
+}
+
+void RestClientMainWindow::renderContentType(const QString &contentType)
+{
+    int type = 0;
+    if( contentType.indexOf("application/json") != -1) {
+        type = m_response->render(ResponseWidget::TYPE_JSON);
+    } else {
+        type = m_response->render(ResponseWidget::TYPE_TEXT);
+    }
+
+    slotNotifyMenuView(type);
 }
 
 void RestClientMainWindow::slotAbout()

@@ -30,10 +30,13 @@ class ResponseWidget : public QStackedWidget
 {
     Q_OBJECT
 public:
+
+    enum type{TYPE_TEXT = 0, TYPE_JSON, };
+
     explicit ResponseWidget(QWidget *parent = 0);
-    int setText(const QString& text, const QString& textType);
+    void setText(const QString& text);
     void append(const QString& text);
-    int render(const QString& texType);
+    ResponseWidget::type render(type typeResponse);
 
     void clear();
     QString toText();
@@ -41,6 +44,8 @@ public:
 private:
     QTextEdit *m_textView;
     QJsonView *m_jsonView;
+
+    QString m_text;
 };
 
 #endif // RESPONSEWIDGET_H

@@ -22,6 +22,7 @@
 #include "qjsonview.h"
 
 #include <QTextEdit>
+#include <QDebug>
 
 ResponseWidget::ResponseWidget(QWidget *parent) :
     QStackedWidget(parent)
@@ -35,31 +36,42 @@ ResponseWidget::ResponseWidget(QWidget *parent) :
     addWidget(m_jsonView);
 
     setCurrentIndex(0);
+
+    m_text = "";
 }
 
-int ResponseWidget::setText(const QString& text, const QString& textType)
+void ResponseWidget::setText(const QString& text)
 {   
-    m_textView->setText(text);
-    return render(textType);
+    m_text = text;
 }
 
 void ResponseWidget::append(const QString& text)
-{
-    m_textView->append(text);
+{        
+    m_text += text;
 }
 
-int ResponseWidget::render(const QString& texType)
+ResponseWidget::type ResponseWidget::render(type typeResponse)
 {
-    int index = 0;
+    type index = TYPE_TEXT;
+    QString body = m_text;
     try{
 
-        if( texType.indexOf("application/json") > -1 ) {
-            m_jsonView->setJson(toText());
-            index = 1;
+        switch( typeResponse ) {
+
+            case TYPE_JSON : body.replace(">", "&gt;").replace("<", "&lt;");
+                             m_jsonView->setJson(body);
+                             index = TYPE_JSON;
+                             break;
+
+            case TYPE_TEXT: index = TYPE_TEXT;
+                            m_textView->setText(body);
+                            break;
+
         }
 
     } catch( ... ) {
-        index = 0;
+        index = TYPE_TEXT;
+        m_textView->setText(body);
     }
 
     setCurrentIndex(index);
@@ -69,12 +81,13 @@ int ResponseWidget::render(const QString& texType)
 
 QString ResponseWidget::toText()
 {
-    return m_textView->toPlainText();
+    return m_text;
 }
 
 void ResponseWidget::clear()
 {
     m_textView->clear();
     m_jsonView->clear();
+    m_text.clear();
 }
 
