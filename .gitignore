@@ -1,1 +1,5 @@
 qrestclient.pro.user*
+Makefile
+bin/*
+src/build/*
+src/Makefile
