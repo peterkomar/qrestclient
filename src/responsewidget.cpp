@@ -20,6 +20,7 @@
 
 #include "responsewidget.h"
 #include "qjsonview.h"
+#include "qcsvview.h"
 
 #include <QTextEdit>
 #include <QDebug>
@@ -34,6 +35,9 @@ ResponseWidget::ResponseWidget(QWidget *parent) :
 
     m_jsonView = new QJsonView;
     addWidget(m_jsonView);
+
+    m_csvView = new QCsvView;
+    addWidget(m_csvView);
 
     setCurrentIndex(0);
 
@@ -65,6 +69,9 @@ ResponseWidget::type ResponseWidget::render(type typeResponse)
 
             case TYPE_TEXT: index = TYPE_TEXT;
                             m_textView->setText(body);
+                            break;
+            case TYPE_CSV:  index = TYPE_CSV;
+                            m_csvView->setText(body);
                             break;
 
         }
