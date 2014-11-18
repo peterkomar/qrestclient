@@ -25,13 +25,18 @@
 
 class QTextEdit;
 class QJsonView;
+class QCsvView;
 
 class ResponseWidget : public QStackedWidget
 {
     Q_OBJECT
 public:
 
-    enum type{TYPE_TEXT = 0, TYPE_JSON, };
+    enum type {
+      TYPE_TEXT = 0,
+      TYPE_JSON,
+      TYPE_CSV,
+    };
 
     explicit ResponseWidget(QWidget *parent = 0);
     void setText(const QString& text);
@@ -44,6 +49,7 @@ public:
 private:
     QTextEdit *m_textView;
     QJsonView *m_jsonView;
+    QCsvView  *m_csvView;
 
     QString m_text;
 };

@@ -59,6 +59,7 @@ public slots:
 
     void slotViewJson();
     void slotViewText();
+    void slotViewCsv();
     void slotAbout();
 
     void slotNotifyMenuView(int pos);
@@ -89,6 +90,7 @@ private:
 
     QAction *m_jsonView;
     QAction *m_textView;
+    QAction *m_csvView;
 
 
     void loadHistory();

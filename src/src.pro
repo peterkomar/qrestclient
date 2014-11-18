@@ -16,7 +16,8 @@ SOURCES += main.cpp \
     paramslist.cpp \
     resthistorywidget.cpp \
     qjsonview.cpp \
-    responsewidget.cpp
+    responsewidget.cpp \
+    qcsvview.cpp
 QT += network \
     sql \
     widgets
@@ -27,7 +28,8 @@ HEADERS += \
     paramslist.h \
     resthistorywidget.h \
     qjsonview.h \
-    responsewidget.h
+    responsewidget.h \
+    qcsvview.h
 RESOURCES += application.qrc
 FORMS += \
     dialog.ui
