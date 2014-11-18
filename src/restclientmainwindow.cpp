@@ -114,20 +114,26 @@ void RestClientMainWindow::setupMenu()
 
     m_jsonView = new QAction("Json", this);
     m_textView = new QAction("Text", this);
+    m_csvView  = new QAction("CSV", this);
 
     QActionGroup *viewGroup = new QActionGroup(this);
     viewGroup->addAction(m_jsonView);
     viewGroup->addAction(m_textView);
+    viewGroup->addAction(m_csvView);
 
     m_jsonView->setCheckable(true);
     m_textView->setCheckable(true);
+    m_csvView->setCheckable(true);
+
     m_textView->setChecked(true);
 
     view->addAction(m_jsonView);
     view->addAction(m_textView);
+    view->addAction(m_csvView);
 
     connect(m_jsonView, SIGNAL(triggered()), this, SLOT(slotViewJson()));
     connect(m_textView, SIGNAL(triggered()), this, SLOT(slotViewText()));
+    connect(m_csvView,  SIGNAL(triggered()), this, SLOT(slotViewCsv()));
 
     QAction *a = new QAction("About", this);
     QMenu *m = menuBar()->addMenu("Help");
@@ -648,6 +654,12 @@ void RestClientMainWindow::slotViewJson()
 void RestClientMainWindow::slotViewText()
 {
     ResponseWidget::type type = m_response->render(ResponseWidget::TYPE_TEXT);
+    slotNotifyMenuView(type);
+}
+
+void RestClientMainWindow::slotViewCsv()
+{
+    ResponseWidget::type type = m_response->render(ResponseWidget::TYPE_CSV);
     slotNotifyMenuView(type);
 }
 
