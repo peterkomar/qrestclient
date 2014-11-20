@@ -46,7 +46,7 @@
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
-    setMinimumSize(800, 600);
+    setMinimumSize(1000, 600);
     _gui();
 
     m_reply = 0;
