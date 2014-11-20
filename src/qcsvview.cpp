@@ -9,6 +9,7 @@
 #include <QStandardItem>
 #include <QHeaderView>
 #include <QTreeView>
+#include <QStatusBar>
 
 #include <QDebug>
 
@@ -34,9 +35,19 @@ QCsvView::QCsvView(QWidget *parent) :
 
   m_csvBody = new QTreeView;
 
+  lblCountColumns = new QLabel();
+  lblCountRows = new QLabel();
+
+  QStatusBar *statusBar = new QStatusBar();
+  statusBar->addWidget(new QLabel("Line:"));
+  statusBar->addWidget(lblCountRows);
+  statusBar->addWidget(new QLabel("Col:"));
+  statusBar->addWidget(lblCountColumns);
+
   QVBoxLayout *lyt = new QVBoxLayout(this);
   lyt->addLayout(form);
   lyt->addWidget(m_csvBody);
+  lyt->addWidget(statusBar);
 
   connect(txtDelimeter,SIGNAL(textChanged(QString)),this,SLOT(slotChangeDelimeter(QString)));
   connect(txtEnclosure,SIGNAL(textChanged(QString)),this,SLOT(slotChangeEnclosure(QString)));
@@ -88,9 +99,9 @@ void QCsvView::renderCsv()
   m_csvBody->setModel(model);
   m_csvBody->setAlternatingRowColors(true);
 
-  for(int i = 0; i < countColumns; i++) {
-    m_csvBody->header()->setSectionResizeMode(i,QHeaderView::Stretch);
-  }
+  m_csvBody->header()->setStretchLastSection(true);
+  lblCountColumns->setText(QString::number(countColumns));
+  lblCountRows->setText(QString::number(rows.size()));
 }
 //================ SLOTS ======
 void QCsvView::slotChangeDelimeter(QString text)
