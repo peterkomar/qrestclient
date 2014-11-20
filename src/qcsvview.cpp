@@ -9,6 +9,7 @@
 #include <QStandardItem>
 #include <QHeaderView>
 #include <QTreeView>
+#include <QStatusBar>
 
 #include <QDebug>
 
@@ -34,9 +35,19 @@ QCsvView::QCsvView(QWidget *parent) :
 
   m_csvBody = new QTreeView;
 
+  lblCountColumns = new QLabel();
+  lblCountRows = new QLabel();
+
+  QStatusBar *statusBar = new QStatusBar();
+  statusBar->addWidget(new QLabel("Line:"));
+  statusBar->addWidget(lblCountRows);
+  statusBar->addWidget(new QLabel("Col:"));
+  statusBar->addWidget(lblCountColumns);
+
   QVBoxLayout *lyt = new QVBoxLayout(this);
   lyt->addLayout(form);
   lyt->addWidget(m_csvBody);
+  lyt->addWidget(statusBar);
 
   connect(txtDelimeter,SIGNAL(textChanged(QString)),this,SLOT(slotChangeDelimeter(QString)));
   connect(txtEnclosure,SIGNAL(textChanged(QString)),this,SLOT(slotChangeEnclosure(QString)));
@@ -51,6 +62,8 @@ void QCsvView::setText(const QString &text)
 
 void QCsvView::renderCsv()
 {
+  QRegExp regEnclosure("^\\" + m_Enclosure + "{1}|\\" + m_Enclosure + "{1}$");
+
   QRegExp regRow("\n|\r|\n\r|\r\n");
   QRegExp regColumn(m_Delimeter + "|" + m_Delimeter + m_Enclosure+"|" + m_Enclosure + m_Delimeter + "|" + m_Enclosure + m_Delimeter + m_Enclosure);
 
@@ -65,7 +78,9 @@ void QCsvView::renderCsv()
 
     rows.removeFirst();
     for(int i = 0; i < countColumns; i++) {
-      model->setHeaderData(i, Qt::Horizontal, headerColumns.at(i).toLocal8Bit().constData());
+
+      QString text = QString(headerColumns.at(i).toLocal8Bit().constData()).replace(regEnclosure, "");
+      model->setHeaderData(i, Qt::Horizontal, text);
     }
 
   } else {
@@ -80,7 +95,8 @@ void QCsvView::renderCsv()
 
     for(int y = 0; y < columns.size(); y++) {
 
-      QStandardItem* item = new QStandardItem(columns.at(y).toLocal8Bit().constData());
+      QString text = QString(columns.at(y).toLocal8Bit().constData()).replace(regEnclosure, "");
+      QStandardItem* item = new QStandardItem(text);
       model->setItem(i,y,item);
     }
   }
@@ -88,9 +104,9 @@ void QCsvView::renderCsv()
   m_csvBody->setModel(model);
   m_csvBody->setAlternatingRowColors(true);
 
-  for(int i = 0; i < countColumns; i++) {
-    m_csvBody->header()->setSectionResizeMode(i,QHeaderView::Stretch);
-  }
+  m_csvBody->header()->setStretchLastSection(true);
+  lblCountColumns->setText(QString::number(countColumns));
+  lblCountRows->setText(QString::number(rows.size()));
 }
 //================ SLOTS ======
 void QCsvView::slotChangeDelimeter(QString text)

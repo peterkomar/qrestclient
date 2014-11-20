@@ -4,6 +4,7 @@
 #include <QWidget>
 
 class QTreeView;
+class QLabel;
 
 class QCsvView : public QWidget
 {
@@ -22,6 +23,9 @@ private:
   bool m_firstRowHeader;
 
   QTreeView* m_csvBody;
+
+  QLabel* lblCountRows;
+  QLabel* lblCountColumns;
 
 signals:
 
