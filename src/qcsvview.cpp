@@ -62,6 +62,8 @@ void QCsvView::setText(const QString &text)
 
 void QCsvView::renderCsv()
 {
+  QRegExp regEnclosure("^\\" + m_Enclosure + "{1}|\\" + m_Enclosure + "{1}$");
+
   QRegExp regRow("\n|\r|\n\r|\r\n");
   QRegExp regColumn(m_Delimeter + "|" + m_Delimeter + m_Enclosure+"|" + m_Enclosure + m_Delimeter + "|" + m_Enclosure + m_Delimeter + m_Enclosure);
 
@@ -76,7 +78,9 @@ void QCsvView::renderCsv()
 
     rows.removeFirst();
     for(int i = 0; i < countColumns; i++) {
-      model->setHeaderData(i, Qt::Horizontal, headerColumns.at(i).toLocal8Bit().constData());
+
+      QString text = QString(headerColumns.at(i).toLocal8Bit().constData()).replace(regEnclosure, "");
+      model->setHeaderData(i, Qt::Horizontal, text);
     }
 
   } else {
@@ -91,7 +95,8 @@ void QCsvView::renderCsv()
 
     for(int y = 0; y < columns.size(); y++) {
 
-      QStandardItem* item = new QStandardItem(columns.at(y).toLocal8Bit().constData());
+      QString text = QString(columns.at(y).toLocal8Bit().constData()).replace(regEnclosure, "");
+      QStandardItem* item = new QStandardItem(text);
       model->setItem(i,y,item);
     }
   }
