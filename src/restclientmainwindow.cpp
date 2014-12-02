@@ -482,7 +482,7 @@ void RestClientMainWindow::slotFinishRequest()
     m_responseHeaders->clear();
     for (int i = 0; i < headers.size(); ++i) {
 
-        if( headers.at(i) == "Content-Type") {
+        if( headers.at(i).toLower() == "content-type") {
             contetType = m_reply->rawHeader(headers.at(i));
         }
 
@@ -543,7 +543,7 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
     QString headers = q.value(7).toString();
     QString type = "text";
     int pos = 0;
-    if((pos = headers.indexOf("Content-Type")) != -1) {
+    if((pos = headers.indexOf("content-type", 0, Qt::CaseInsensitive)) != -1) {
         int end = headers.indexOf("<", pos+1);
         type = headers.mid(pos+20, end-pos+5).trimmed();
     }
@@ -677,7 +677,7 @@ void RestClientMainWindow::slotNotifyMenuView(int pos)
 void RestClientMainWindow::renderContentType(const QString &contentType)
 {
     int type = 0;
-    if( contentType.indexOf("application/json") != -1) {
+    if( contentType.indexOf("application/json", 0, Qt::CaseInsensitive) != -1) {
         type = m_response->render(ResponseWidget::TYPE_JSON);
     } else {
         type = m_response->render(ResponseWidget::TYPE_TEXT);
