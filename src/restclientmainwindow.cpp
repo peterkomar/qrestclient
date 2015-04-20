@@ -428,6 +428,12 @@ void RestClientMainWindow::slotSendRequest()
     urlObject.setQuery(query);
 
     QNetworkRequest request(urlObject);
+
+    //Ignore SSL errors
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+
     QTreeWidgetItemIterator headerIterator(m_headers);
     while (*headerIterator) {
         request.setRawHeader((*headerIterator)->text(0).toUtf8(), (*headerIterator)->text(1).toUtf8());
