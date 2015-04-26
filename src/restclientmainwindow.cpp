@@ -478,11 +478,10 @@ void RestClientMainWindow::slotSendRequest()
     waitDialog();
 }
 
-void RestClientMainWindow::slotFinishRequest()
+void RestClientMainWindow::renderResponseHeaders()
 {
     QTime time = QTime::currentTime();
     QList<QByteArray> headers = m_reply->rawHeaderList();
-    m_reply->close();
 
     QString contetType;
     m_responseHeaders->clear();
@@ -496,10 +495,15 @@ void RestClientMainWindow::slotFinishRequest()
     }
 
     m_responseHeaders->append("<b>Execute Time</b>: "+QString::number(m_time.msecsTo(time))+" ms");
+    renderContentType(contetType);
+}
 
+void RestClientMainWindow::slotFinishRequest()
+{
+    renderResponseHeaders();
+    m_reply->close();
     saveHistory(200);
     releaseReplyResources();
-    renderContentType(contetType);
 }
 
 void RestClientMainWindow::slotReplyResponse()
@@ -509,6 +513,8 @@ void RestClientMainWindow::slotReplyResponse()
 
 void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
 {
+    renderResponseHeaders();
+
     QString error_string;
     switch( error) {
       case QNetworkReply::ConnectionRefusedError :
@@ -528,8 +534,6 @@ void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
     releaseReplyResources();
 
     saveHistory(error);
-
-    renderContentType("");
 }
 
 
