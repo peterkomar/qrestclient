@@ -68,7 +68,7 @@ ResponseWidget::type ResponseWidget::render(type typeResponse)
                              break;
 
             case TYPE_TEXT: index = TYPE_TEXT;
-                            m_textView->setText(body);
+                            m_textView->setPlainText(body);
                             break;
             case TYPE_CSV:  index = TYPE_CSV;
                             m_csvView->setText(body);

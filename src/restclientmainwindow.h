@@ -112,6 +112,8 @@ private:
     void parseUrlParams();
 
     void renderContentType(const QString& contentType);
+
+    void renderResponseHeaders();
 };
 
 #endif // RESTCLIENTMAINWINDOW_H
