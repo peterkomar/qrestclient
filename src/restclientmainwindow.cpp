@@ -225,6 +225,7 @@ void RestClientMainWindow::setupRightPanel()
     m_responseHeaders = new QTextEdit;
     m_responseHeaders->setAcceptRichText(true);
     m_responseHeaders->setReadOnly(true);
+    m_responseHeaders->setAutoFormatting(QTextEdit::AutoNone);
 
     QDockWidget *dock = new QDockWidget(this);
     dock->setObjectName("Right");
