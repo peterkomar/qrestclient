@@ -223,9 +223,8 @@ void RestClientMainWindow::setupLeftPanel()
 void RestClientMainWindow::setupRightPanel()
 {
     m_responseHeaders = new QTextEdit;
-    m_responseHeaders->setAcceptRichText(true);
+    m_responseHeaders->setAcceptRichText(false);
     m_responseHeaders->setReadOnly(true);
-    m_responseHeaders->setAutoFormatting(QTextEdit::AutoNone);
 
     QDockWidget *dock = new QDockWidget(this);
     dock->setObjectName("Right");
@@ -492,10 +491,10 @@ void RestClientMainWindow::renderResponseHeaders()
             contetType = m_reply->rawHeader(headers.at(i));
         }
 
-        m_responseHeaders->append("<b>"+headers.at(i) + "</b>: " + m_reply->rawHeader(headers.at(i)));
+        m_responseHeaders->append("<b>"+headers.at(i) + ":</b> " + m_reply->rawHeader(headers.at(i)));
     }
 
-    m_responseHeaders->append("<b>Execute Time</b>: "+QString::number(m_time.msecsTo(time))+" ms");
+    m_responseHeaders->append("<b>Execution Time:</b> "+QString::number(m_time.msecsTo(time))+" ms");
     renderContentType(contetType);
 }
 
@@ -554,9 +553,10 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
     QString headers = q.value(7).toString();
     QString type = "text";
     int pos = 0;
-    if((pos = headers.indexOf("content-type", 0, Qt::CaseInsensitive)) != -1) {
-        int end = headers.indexOf("<", pos+1);
-        type = headers.mid(pos+20, end-pos+5).trimmed();
+
+    if((pos = headers.indexOf("content-type:", 0, Qt::CaseInsensitive)) != -1) {
+        int end = headers.indexOf("\n", pos+1);
+        type = headers.mid(pos, end-pos).trimmed();
     }
 
     m_editURL->setText(q.value(4).toString());
