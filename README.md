@@ -11,3 +11,10 @@ Featuers:
 * Requests history cleaner
 * JSON response viewer
 * CSV response viewer
+
+Requirements:
+* [QT 5](http://www.qt.io/)
+
+Installation:
+* `qmake`
+* `make`
