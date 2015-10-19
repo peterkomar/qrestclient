@@ -446,20 +446,9 @@ void RestClientMainWindow::slotSendRequest()
     if( m_comboRestMethod->currentText() == "GET" ) {
         m_reply = manager->get(request);
     } else if( m_comboRestMethod->currentText() == "POST" ) {
-
-        if( rawBody.isEmpty() ) {
-            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-            m_reply = manager->post(request, query.query(QUrl::FullyEncoded).toUtf8());
-        } else {
-            QByteArray postDataSize = QByteArray::number(rawBody.size());
-            request.setRawHeader("Content-Type", contentType.toLatin1());
-            request.setRawHeader("Content-Length", postDataSize);
-            m_reply = manager->post(request, rawBody);
-        }
-
+        sendRawRequest(true, manager, request, query, rawBody, contentType);
     } else if( m_comboRestMethod->currentText() == "PUT" ) {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-        m_reply = manager->put(request, query.query(QUrl::FullyEncoded).toUtf8());
+        sendRawRequest(false, manager, request, query, rawBody, contentType);
     } else if( m_comboRestMethod->currentText() == "DELETE" ) {
         m_reply = manager->deleteResource(request);
     } else {
@@ -476,6 +465,30 @@ void RestClientMainWindow::slotSendRequest()
     m_response->clear();
     m_errorResponse->clear();
     waitDialog();
+}
+
+void RestClientMainWindow::sendRawRequest(bool isPost,
+                                          QNetworkAccessManager *manager,
+                                          QNetworkRequest& request,
+                                          const QUrlQuery& query,
+                                          const QByteArray& rawBody,
+                                          const QString& contentType)
+{
+    QByteArray raw = rawBody;
+    if( rawBody.isEmpty() ) {
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        raw = query.query(QUrl::FullyEncoded).toUtf8();
+    } else {
+        QByteArray postDataSize = QByteArray::number(raw.size());
+        request.setRawHeader("Content-Type", contentType.toLatin1());
+        request.setRawHeader("Content-Length", postDataSize);
+    }
+
+    if (isPost) {
+        m_reply = manager->post(request, raw);
+    } else {
+        m_reply = manager->put(request, raw);
+    }
 }
 
 void RestClientMainWindow::renderResponseHeaders()
