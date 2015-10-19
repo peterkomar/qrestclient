@@ -29,7 +29,6 @@ ResponseWidget::ResponseWidget(QWidget *parent) :
     QStackedWidget(parent)
 {
     m_textView = new QTextEdit;
-    m_textView->setAcceptRichText(false);
     m_textView->setReadOnly(true);
     addWidget(m_textView);
 
@@ -78,7 +77,7 @@ ResponseWidget::type ResponseWidget::render(type typeResponse)
 
     } catch( ... ) {
         index = TYPE_TEXT;
-        m_textView->setText(body);
+        m_textView->setPlainText(body);
     }
 
     setCurrentIndex(index);

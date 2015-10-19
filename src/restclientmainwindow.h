@@ -105,6 +105,12 @@ private:
     void setupRightPanel();
     void setupBottomPabel();
     void setupMenu();
+    void sendRawRequest(bool isPost,
+                        QNetworkAccessManager *manager,
+                        QNetworkRequest& request,
+                        const QUrlQuery& query,
+                        const QByteArray& rawBody,
+                        const QString& contentType);
 
     QWidget* buildParamsWidget(ParamsList *);
 
