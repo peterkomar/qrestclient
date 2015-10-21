@@ -239,6 +239,7 @@ void RestClientMainWindow::setupBottomPabel()
 {
     m_historyWidget = new RestHistoryWidget;
     connect(m_historyWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(slotHistoryLoad(QTreeWidgetItem*,int)));
+    connect(m_historyWidget, SIGNAL(itemSelectionChanged()), this, SLOT(slotSelectedHistory()));
     connect(m_historyWidget, SIGNAL(emitRemoveItems()), this, SLOT(slotHistoryRemoveSelected()));
     connect(m_historyWidget, SIGNAL(emitRemoveAllItems()), this, SLOT(slotHistoryClear()));
 
@@ -549,6 +550,15 @@ void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
     saveHistory(error);
 }
 
+void RestClientMainWindow::slotSelectedHistory()
+{
+    QList<QTreeWidgetItem*> list = m_historyWidget->selectedItems();
+    if (!list.isEmpty()) {
+       QTreeWidgetItem *item = list.takeFirst();
+       slotHistoryLoad(item, 0);
+    }
+}
+
 
 void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
 {
@@ -716,6 +726,6 @@ void RestClientMainWindow::slotAbout()
                        "<br/> Supports sending GET, POST, PUT, DELETE requests to URL, managing sending params, heders, contets and logging sended requests.<br/><br/>"
                        "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>"
                        "<br/><br/><b>License:</b> GPL v2"
-                       "<br/> 2007 - 2014"
+                       "<br/> 2007 - " + QDateTime::currentDateTime().toString("yyyy") +
                        "<br/><br/><b>Build</b>: " + QString::number(QDateTime::currentMSecsSinceEpoch()));
 }

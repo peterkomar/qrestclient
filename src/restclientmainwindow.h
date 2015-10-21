@@ -54,6 +54,7 @@ public slots:
     void slotReplyError(QNetworkReply::NetworkError error);
 
     void slotHistoryLoad(QTreeWidgetItem*,int);
+    void slotSelectedHistory();
     void slotHistoryRemoveSelected();
     void slotHistoryClear();
 
