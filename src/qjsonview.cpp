@@ -23,6 +23,7 @@
 #include <QJsonDocument>
 #include <QHeaderView>
 #include <QJsonArray>
+#include <QDebug>
 
 QJsonView::QJsonView(QWidget *parent) :
     QTreeWidget(parent)
@@ -83,7 +84,18 @@ void QJsonView::addItem(const QString& name, const QJsonValue& val, QTreeWidgetI
     QTreeWidgetItem *item = 0;
     if( val.isDouble() ) {
         item = createItem(name, parent);
-        item->setText(1, QString::number(val.toDouble()));
+
+        QString value = QString::number(val.toDouble());
+        if (value.indexOf("e+") != -1) {
+            QVariant var = val.toVariant();
+            bool ok = false;
+            qlonglong result = var.toLongLong(&ok);
+            if (ok) {
+                value = QString::number(result);
+            }
+        }
+
+        item->setText(1, value);
     } else if(val.isString()) {
         item = createItem(name, parent);
         item->setText(1, val.toString());
