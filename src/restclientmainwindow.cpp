@@ -417,6 +417,14 @@ void RestClientMainWindow::slotSendRequest()
         return;
     }
 
+    QString title = windowTitle();
+    int index = title.indexOf(" - ");
+    if (index != -1) {
+        title.remove(index, title.length());
+    }
+
+    setWindowTitle(title + QString(" - [%1] %2").arg(m_comboRestMethod->currentText()).arg(url));
+
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
 
     QUrl urlObject(url);
