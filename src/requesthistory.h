@@ -51,6 +51,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QCoreApplication>
+#include <QVector>
 
 class RequestHistory
 {
@@ -65,7 +66,7 @@ public:
     void addParam(int requestId, const QString& name, const QString& value);
     void addHeader(int requestId, const QString& name, const QString& value);
     void addRaw(int requestId, const QString& contentType, const QString& rawBody);
-    bool deleteHistory(int requestId);
+    bool deleteHistory(const QVector<int> requestIds);
 
 private:
     bool connect(const QString& name);

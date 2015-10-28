@@ -121,6 +121,7 @@ private:
     void renderContentType(const QString& contentType);
 
     void renderResponseHeaders();
+    void setTitle(const QString& method, const QString& url);
 };
 
 #endif // RESTCLIENTMAINWINDOW_H
