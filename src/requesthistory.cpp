@@ -211,26 +211,41 @@ void RequestHistory::addRaw(int requestId, const QString &contentType, const QSt
     }
 }
 
-bool RequestHistory::deleteHistory(int requestId)
+bool RequestHistory::deleteHistory(const QVector<int> requestIds)
 {
+    m_database.transaction();
     QSqlQuery query(m_database);
 
+    QString ids;
+    for (int i = 0; i < requestIds.size(); ++i) {
+        ids += QString::number(requestIds.at(i)) + ", ";
+    }
+    ids = ids.remove(ids.length()-2, 2);
+
     QStringList queries;
-    queries << "DELETE FROM requests WHERE id = :id"
-            << "DELETE FROM requests_params WHERE request_id = :id"
-            << "DELETE FROM request_headers WHERE request_id = :id"
-            << "DELETE FROM request_raw WHERE request_id = :id"
-            << "vacuum";
+    queries << QString("DELETE FROM requests WHERE id IN (%1)").arg(ids)
+            << QString("DELETE FROM requests_params WHERE request_id IN (%1)").arg(ids)
+            << QString("DELETE FROM request_headers WHERE request_id IN (%1)").arg(ids)
+            << QString("DELETE FROM request_raw WHERE request_id IN (%1)").arg(ids);
 
     QStringList::const_iterator constIterator;
+    bool sqlOk = true;
     for (constIterator = queries.constBegin(); constIterator != queries.constEnd(); ++constIterator) {
-        query.prepare(*constIterator);
-        query.bindValue(":id", requestId);
-        if (!query.exec()) {
-          qDebug() << "Failed to execute: " << (*constIterator).toLocal8Bit().constData();
-          return false;
+        if (!query.exec(*constIterator) && sqlOk) {
+            sqlOk = false;
         }
     }
+
+    query.clear();
+    if (sqlOk) {
+        sqlOk = database().commit();
+    }
+
+    if(!sqlOk) {
+        qDebug() << "Failed to execute: " << query.lastError().text();
+        database().rollback();
+    }
+    query.exec("vacuum");
 
     return true;
 }

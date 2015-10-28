@@ -39,7 +39,6 @@
 #include <QStatusBar>
 #include <QMenuBar>
 #include <QSettings>
-#include <QProgressDialog>
 #include <QCloseEvent>
 #include <QShortcut>
 
@@ -331,9 +330,12 @@ void RestClientMainWindow::loadHistory()
 void RestClientMainWindow::waitDialog()
 {
     m_waitDialog = new QMessageBox(this);
-    m_waitDialog->setStandardButtons(QMessageBox::NoButton);
+    m_waitDialog->setStandardButtons(QMessageBox::Abort);
     m_waitDialog->setText("Please wait, sending request ...");
-    m_waitDialog->exec();
+    int btn = m_waitDialog->exec();
+    if (btn == QMessageBox::Abort && m_reply) {
+        m_reply->abort();
+    }
 }
 
 void RestClientMainWindow::releaseReplyResources()
@@ -353,26 +355,16 @@ void RestClientMainWindow::releaseReplyResources()
 
 void RestClientMainWindow::clearItems(QList<QTreeWidgetItem *>& items)
 {
-    int countItems = items.count();
-    QProgressDialog *progress = new QProgressDialog("Removing history...", "", 0, countItems, this);
-    progress->setWindowModality(Qt::WindowModal);
-    progress->setAutoClose(true);
-
-    QPushButton *btn = new QPushButton("Cancel", progress);
-    btn->setDisabled(true);
-    progress->setCancelButton(btn);
-
-    int i = 0;
-    progress->setValue(i);
-    while( !items.isEmpty() ) {
-        progress->setValue(++i);
-        QTreeWidgetItem *item = (QTreeWidgetItem *)items.takeFirst();
-        m_history->deleteHistory(item->text(0).toInt());
-        delete item;
+    QVector<int> ids;
+    for (int i = 0; i < items.size(); ++i) {
+        ids << ((QTreeWidgetItem *)items.at(i))->text(0).toInt();
     }
 
-    progress->setValue(countItems);
-    delete progress;
+    if (m_history->deleteHistory(ids)) {
+        qDeleteAll(items);
+    } else {
+        QMessageBox::critical(this, tr("Error delete"), tr("Can't delete item(s) beacuses database"));
+    }
 }
 
 void RestClientMainWindow::parseUrlParams()
@@ -404,6 +396,17 @@ void RestClientMainWindow::parseUrlParams()
    }
 }
 
+void RestClientMainWindow::setTitle(const QString& method, const QString& url)
+{
+    QString title = windowTitle();
+    int index = title.indexOf(" - ");
+    if (index != -1) {
+        title.remove(index, title.length());
+    }
+
+    setWindowTitle(title + QString(" - [%1] %2").arg(method).arg(url));
+}
+
 //slots
 void RestClientMainWindow::slotSendRequest()
 {
@@ -417,13 +420,7 @@ void RestClientMainWindow::slotSendRequest()
         return;
     }
 
-    QString title = windowTitle();
-    int index = title.indexOf(" - ");
-    if (index != -1) {
-        title.remove(index, title.length());
-    }
-
-    setWindowTitle(title + QString(" - [%1] %2").arg(m_comboRestMethod->currentText()).arg(url));
+    setTitle(m_comboRestMethod->currentText(), url);
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
 
