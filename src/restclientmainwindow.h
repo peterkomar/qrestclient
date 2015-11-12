@@ -57,6 +57,9 @@ public slots:
     void slotSelectedHistory();
     void slotHistoryRemoveSelected();
     void slotHistoryClear();
+    void slotFilterHistoryItems(const QString& );
+    void slotShowHistoryFilter();
+    void slotHideHistoryFilter();
 
     void slotViewJson();
     void slotViewText();
@@ -67,6 +70,7 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent *event);
+    void keyPressEvent(QKeyEvent * event);
 
 
 private:
@@ -85,6 +89,7 @@ private:
     QTabWidget *m_leftTabWidget;
 
     RequestHistory *m_history;
+    QLineEdit *m_filterEdit;
     QNetworkReply *m_reply;
 
     QTime m_time;
@@ -94,7 +99,7 @@ private:
     QAction *m_csvView;
 
 
-    void loadHistory();
+    void loadHistory(const QString& );
     void saveHistory(int resposeCode);
 
     void releaseReplyResources();

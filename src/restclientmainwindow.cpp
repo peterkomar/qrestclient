@@ -53,7 +53,7 @@ RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
 
     m_history = new RequestHistory();
     m_history->init();
-    loadHistory();
+    loadHistory("");
 
     QSettings setting("UDL", "qrestclient");
     QByteArray arr = setting.value("gui/state").toByteArray();
@@ -76,6 +76,14 @@ void RestClientMainWindow::closeEvent(QCloseEvent *event)
     setting.setValue("gui/tab_index", m_leftTabWidget->currentIndex());
 
     event->accept();
+}
+
+void RestClientMainWindow::keyPressEvent(QKeyEvent * event)
+{
+    if (event->key() == Qt::Key_Escape) {
+        slotHideHistoryFilter();
+        event->accept();
+    }
 }
 
 void RestClientMainWindow::_gui()
@@ -236,19 +244,49 @@ void RestClientMainWindow::setupRightPanel()
 
 void RestClientMainWindow::setupBottomPabel()
 {
+    m_filterEdit = new QLineEdit();
+    m_filterEdit->setMaximumWidth(300);
+    m_filterEdit->setVisible(false);
+    connect(m_filterEdit, SIGNAL(textChanged(QString)), this, SLOT(slotFilterHistoryItems(QString)));
+
+    QGridLayout *gridLayout = new QGridLayout;
+    gridLayout->addWidget(m_filterEdit, 0, 1);
+
     m_historyWidget = new RestHistoryWidget;
     connect(m_historyWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(slotHistoryLoad(QTreeWidgetItem*,int)));
     connect(m_historyWidget, SIGNAL(itemSelectionChanged()), this, SLOT(slotSelectedHistory()));
-    connect(m_historyWidget, SIGNAL(emitRemoveItems()), this, SLOT(slotHistoryRemoveSelected()));
-    connect(m_historyWidget, SIGNAL(emitRemoveAllItems()), this, SLOT(slotHistoryClear()));
+    gridLayout->addWidget(m_historyWidget, 1,0,1,2);
+
+    QAction *a1 = new QAction("Remove selected items", this);
+    a1->setShortcut(QKeySequence::Delete);
+    QAction *a2 = new QAction("Clear history", this);
+    QAction *a3 = new QAction("Filter", this);
+    a3->setShortcut(QKeySequence::Find);
+
+    connect(a1, SIGNAL(triggered()), this, SLOT(slotHistoryRemoveSelected()));
+    connect(a2, SIGNAL(triggered()), this, SLOT(slotHistoryClear()));
+    connect(a3, SIGNAL(triggered()), this, SLOT(slotShowHistoryFilter()));
+
+    m_historyWidget->addContextMenuItem(a1);
+    m_historyWidget->addContextMenuItem(a2);
+    m_historyWidget->addContextMenuSeparator();
+    m_historyWidget->addContextMenuItem(a3);
+
+    QWidget *bottom = new QWidget();
+    bottom->setLayout(gridLayout);
 
     QDockWidget *dock = new QDockWidget(this);
     dock->setObjectName("Bottom");
     dock->setWindowTitle("Request History");
-    dock->setWidget(m_historyWidget);
+    dock->setWidget(bottom);
     dock->setFeatures(QDockWidget::DockWidgetMovable
                       | QDockWidget::DockWidgetFloatable);
     addDockWidget(Qt::BottomDockWidgetArea, dock);
+
+    QMenu *history = menuBar()->addMenu("History");
+    history->addAction(a1);
+    history->addAction(a2);
+    history->addAction(a3);
 }
 
 QWidget* RestClientMainWindow::buildParamsWidget(ParamsList *widget)
@@ -305,14 +343,14 @@ void RestClientMainWindow::saveHistory(int code)
     }
 
     m_history->addRaw(requestId, m_contetTypeCombo->currentText(), m_contentBody->toPlainText());
-    loadHistory();
+    loadHistory("");
+    m_filterEdit->clear();
 }
 
-void RestClientMainWindow::loadHistory()
+void RestClientMainWindow::loadHistory(const QString& query)
 {
     QSqlQuery q(m_history->database());
-    q.prepare("SELECT * FROM requests ORDER By id DESC");
-    if( !q.exec() ) {
+    if( !q.exec(m_history->filterQuery(query)) ) {
         throw "Error execute query";
     }
 
@@ -675,9 +713,26 @@ void RestClientMainWindow::slotHistoryClear()
 
     clearItems(list);
 
-    loadHistory();
+    loadHistory("");
+    m_filterEdit->clear();
 
     QApplication::restoreOverrideCursor();
+}
+
+void RestClientMainWindow::slotFilterHistoryItems(const QString& text)
+{
+    loadHistory(text);
+}
+
+void RestClientMainWindow::slotShowHistoryFilter()
+{
+    m_filterEdit->setVisible(true);
+    m_filterEdit->setFocus();
+}
+
+void RestClientMainWindow::slotHideHistoryFilter()
+{
+    m_filterEdit->setVisible(false);
 }
 
 void RestClientMainWindow::slotViewJson()
@@ -732,5 +787,5 @@ void RestClientMainWindow::slotAbout()
                        "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>"
                        "<br/><br/><b>License:</b> GPL v2"
                        "<br/> 2007 - " + QDateTime::currentDateTime().toString("yyyy") +
-                       "<br/><br/><b>Build</b>: " + QString::number(QDateTime::currentMSecsSinceEpoch()));
+                       "<br/><br/><b>Build </b>: 2.0." + QString::number(QDateTime::currentMSecsSinceEpoch()));
 }

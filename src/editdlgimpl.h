@@ -21,24 +21,28 @@
 #define EDITDLGIMPL_H
 
 #include <QDialog>
-#include "ui_dialog.h"
 
-class EditDlgImpl : public QDialog, public Ui::EditDlg
+class QLineEdit;
+class QComboBox;
+
+class EditDlgImpl : public QDialog
 {
     Q_OBJECT
 public:
-    explicit EditDlgImpl(QWidget *parent = 0);
+    explicit EditDlgImpl(bool headerMode, QWidget *parent = 0);
     QString getName() const;
     void setName(const QString& name);
 
     QString getValue() const;
     void setValue(const QString& value);
 
-signals:
+private:
+    QLineEdit *m_name;
+    QLineEdit *m_value;
+    QComboBox *m_cName;
+    QComboBox *m_cValue;
 
-public slots:
-
-
+    bool b_mode;
 };
 
 #endif // EDITDLGIMPL_H

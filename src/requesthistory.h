@@ -67,6 +67,7 @@ public:
     void addHeader(int requestId, const QString& name, const QString& value);
     void addRaw(int requestId, const QString& contentType, const QString& rawBody);
     bool deleteHistory(const QVector<int> requestIds);
+    QString filterQuery(const QString& value);
 
 private:
     bool connect(const QString& name);

@@ -31,13 +31,8 @@ class RestHistoryWidget : public QTreeWidget
 public:
     explicit RestHistoryWidget(QWidget *parent = 0);
 
-signals:
-    void emitRemoveItems();
-    void emitRemoveAllItems();
-
-public slots:
-    void slotRemoveItems();
-    void slotRemoveAllItems();
+    void addContextMenuItem(QAction *action);
+    void addContextMenuSeparator();
 
 protected:
      void mousePressEvent ( QMouseEvent * event );

@@ -44,17 +44,32 @@ RestHistoryWidget::RestHistoryWidget(QWidget *parent) :
     header()->setStretchLastSection(true);
 
     setSelectionMode(QAbstractItemView::ExtendedSelection);
+    menu = new QMenu;
 
-    QAction *a1 = new QAction("Remove selected items", this);
+    /*QAction *a1 = new QAction("Remove selected items", this);
     QAction *a2 = new QAction("Clear history", this);
+    QAction *a3 = new QAction("Find", this);
+    a3->setShortcut(QKeySequence(QKeySequence::Find));
 
     connect(a1, SIGNAL(triggered()), this, SLOT(slotRemoveItems()));
     connect(a2, SIGNAL(triggered()), this, SLOT(slotRemoveAllItems()));
+    connect(a3, SIGNAL(triggered()), this, SLOT(slotFindItems()));
 
     menu = new QMenu;
     menu->addAction(a1);
-    menu->addSeparator();
     menu->addAction(a2);
+    menu->addSeparator();
+    menu->addAction(a3);*/
+}
+
+void RestHistoryWidget::addContextMenuItem(QAction *action)
+{
+    menu->addAction(action);
+}
+
+void RestHistoryWidget::addContextMenuSeparator()
+{
+    menu->addSeparator();
 }
 
 void RestHistoryWidget::mousePressEvent(QMouseEvent *event)
@@ -66,14 +81,4 @@ void RestHistoryWidget::mousePressEvent(QMouseEvent *event)
     }
 
     QTreeWidget::mousePressEvent(event);
-}
-
-void RestHistoryWidget::slotRemoveItems()
-{
-    emit emitRemoveItems();
-}
-
-void RestHistoryWidget::slotRemoveAllItems()
-{
-    emit emitRemoveAllItems();
 }
