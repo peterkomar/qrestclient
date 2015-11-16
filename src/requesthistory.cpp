@@ -258,9 +258,8 @@ QString RequestHistory::filterQuery(const QString& value)
         where = QString("WHERE id ='%1' "
                         "OR date LIKE '%%1%' "
                         "OR code = '%1' "
-                        "OR type LIKE '%1%' "
-                        "OR url LIKE 'http://%1%'"
-                        "OR url LIKE 'https://%1%'").arg(value);
+                        "OR type LIKE '%1' "
+                        "OR url LIKE '%%1%'").arg(value);
     }
 
     return QString("SELECT * FROM requests %1 %2").arg(where).arg(order);

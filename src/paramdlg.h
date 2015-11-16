@@ -21,15 +21,19 @@
 #define EDITDLGIMPL_H
 
 #include <QDialog>
+#include <QMap>
 
 class QLineEdit;
 class QComboBox;
+class QGridLayout;
 
-class EditDlgImpl : public QDialog
+class ParamDlg : public QDialog
 {
     Q_OBJECT
 public:
-    explicit EditDlgImpl(bool headerMode, QWidget *parent = 0);
+    enum Mode { MODE_REQUEST, MODE_HEADER };
+    ParamDlg(Mode mode, QWidget *parent = 0);
+
     QString getName() const;
     void setName(const QString& name);
 
@@ -42,7 +46,20 @@ private:
     QComboBox *m_cName;
     QComboBox *m_cValue;
 
-    bool b_mode;
+    Mode i_mode;
+    QString m_prevHeader;
+
+    QMap<QString, QStringList> m_preHeaders;
+
+    void guiHeader(QGridLayout *gridLayout);
+    void guiRequest(QGridLayout *gridLayout);
+
+    void initPredefinedHeaders();
+
+    void addHeader(const QString& header, QStringList& values);
+
+private slots:
+    void slotChangeHeader(const QString& );
 };
 
 #endif // EDITDLGIMPL_H

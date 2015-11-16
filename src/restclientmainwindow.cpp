@@ -189,9 +189,9 @@ void RestClientMainWindow::setupToolBar()
 
 void RestClientMainWindow::setupLeftPanel()
 {
-    m_params = new ParamsList;
-    m_headers = new ParamsList;
-    m_contetTypeCombo= new QComboBox();
+    m_params = new ParamsList(ParamDlg::MODE_REQUEST);
+    m_headers = new ParamsList(ParamDlg::MODE_HEADER);
+    m_contetTypeCombo = new QComboBox();
     m_contentBody = new QTextEdit;
     m_contentBody->setAcceptRichText(false);
 
@@ -771,7 +771,7 @@ void RestClientMainWindow::slotNotifyMenuView(int pos)
 void RestClientMainWindow::renderContentType(const QString &contentType)
 {
     int type = 0;
-    if( contentType.indexOf("application/json", 0, Qt::CaseInsensitive) != -1) {
+    if( contentType.indexOf("json", 0, Qt::CaseInsensitive) != -1) {
         type = m_response->render(ResponseWidget::TYPE_JSON);
     } else {
         type = m_response->render(ResponseWidget::TYPE_TEXT);
