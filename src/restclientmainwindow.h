@@ -37,6 +37,10 @@ class QMessageBox;
 class QTabWidget;
 class ResponseWidget;
 class Request;
+class ToolBar;
+class LeftPanel;
+class RightPanel;
+class BottomPabel;
 
 class RestClientMainWindow : public QMainWindow
 {
@@ -78,20 +82,16 @@ protected:
 private:
     QMessageBox *m_waitDialog;
 
+    ToolBar *m_toolBar;
+    LeftPanel *m_leftPanel;
+    RightPanel *m_rightPanel;
+    BottomPabel *m_bottomPanel;
+
+
     ResponseWidget *m_response;
     QTextEdit *m_errorResponse;
-    QLineEdit *m_editURL;
-    QComboBox *m_comboRestMethod;
-    ParamsList *m_params;
-    ParamsList *m_headers;
-    QComboBox *m_contetTypeCombo;
-    QTextEdit *m_contentBody;
-    QTextEdit *m_responseHeaders;
-    RestHistoryWidget *m_historyWidget;
-    QTabWidget *m_leftTabWidget;
 
     RequestHistory *m_history;
-    QLineEdit *m_filterEdit;
     QNetworkReply *m_reply;
 
     QTime m_time;
@@ -111,10 +111,7 @@ private:
     void waitDialog();
 
     void _gui();
-    void setupToolBar();
-    void setupLeftPanel();
-    void setupRightPanel();
-    void setupBottomPabel();
+
     void setupMenu();
     void sendRawRequest(bool isPost,
                         QNetworkAccessManager *manager,
@@ -122,8 +119,6 @@ private:
                         const QUrlQuery& query,
                         const QByteArray& rawBody,
                         const QString& contentType);
-
-    QWidget* buildParamsWidget(ParamsList *);
 
     void clearItems(QList<QTreeWidgetItem*>& items);
     void parseUrlParams();

@@ -367,6 +367,8 @@ Request* RequestHistory::getRequest(int requestId)
     request->setResponse(q.value(5).toString());
     request->setResponseCode(q.value(2).toInt());
     request->setError(q.value(6).toString());
+
+    //Support old version
     request->setResponseHeadersString(q.value(7).toString());
 
     //load params

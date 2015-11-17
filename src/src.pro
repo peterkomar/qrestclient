@@ -18,7 +18,11 @@ SOURCES += main.cpp \
     responsewidget.cpp \
     qcsvview.cpp \
     paramdlg.cpp \
-    requestdetailsdlg.cpp
+    requestdetailsdlg.cpp \
+    toolbar.cpp \
+    leftpanel.cpp \
+    rightpanel.cpp \
+    bottompabel.cpp
 QT += network \
     sql \
     widgets
@@ -31,7 +35,11 @@ HEADERS += \
     responsewidget.h \
     qcsvview.h \
     paramdlg.h \
-    requestdetailsdlg.h
+    requestdetailsdlg.h \
+    toolbar.h \
+    leftpanel.h \
+    rightpanel.h \
+    bottompabel.h
 RESOURCES += application.qrc
 FORMS +=
 

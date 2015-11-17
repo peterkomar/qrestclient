@@ -87,6 +87,7 @@ public:
     void addRequestParam(const QString& key, const QString& value);
     QHash<QString, QString> requestParams() const { return m_requestParams; }
 
+    //Support old version
     void setResponseHeadersString(const QString& headers) { m_responseHeadersString = headers; }
 
 private:
