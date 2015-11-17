@@ -36,9 +36,11 @@ ParamDlg::ParamDlg(Mode mode, QWidget *parent) :
     case MODE_HEADER:
         guiHeader(gridLayout);
         initPredefinedHeaders();
+        setWindowTitle(tr("Headers"));
         break;
     case MODE_REQUEST:
         guiRequest(gridLayout);
+        setWindowTitle(tr("Params"));
         break;
     }
 
@@ -92,6 +94,7 @@ void ParamDlg::setName(const QString &name)
 {
     if (i_mode == MODE_HEADER) {
         m_cName->addItem(name);
+        m_cName->setCurrentText(name);
     } else {
         m_name->setText(name);
     }
@@ -110,6 +113,7 @@ void ParamDlg::setValue(const QString &value)
 {
     if (i_mode == MODE_HEADER) {
         m_cValue->addItem(value);
+        m_cValue->setCurrentText(value);
     } else {
         m_value->setText(value);
     }
@@ -149,7 +153,8 @@ void ParamDlg::initPredefinedHeaders()
     list << "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36"
          << "Opera/5.11 (Windows 98; U) [en]"
          << "Mozilla/5.0 (Windows NT 6.4; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36 Edge/12.0"
-         << "Mozilla/5.0 (X11; Linux x86_64; rv:2.0b4) Gecko/20100818 Firefox/4.0b4";
+         << "Mozilla/5.0 (X11; Linux x86_64; rv:2.0b4) Gecko/20100818 Firefox/4.0b4"
+         << "Dredd/1.0.1 (Linux 3.11.10-29-desktop; x64)";
     addHeader("User-Agent", list);
 
     list << "text/plain"
@@ -162,8 +167,6 @@ void ParamDlg::initPredefinedHeaders()
     list << "keep-alive"
          << "Upgrade";
     addHeader("Connection", list);
-
-    m_cName->setCurrentIndex(-1);
 }
 
 void ParamDlg::addHeader(const QString& header, QStringList& values)

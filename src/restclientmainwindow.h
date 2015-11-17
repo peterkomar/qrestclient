@@ -36,6 +36,7 @@ class QTreeWidgetItem;
 class QMessageBox;
 class QTabWidget;
 class ResponseWidget;
+class Request;
 
 class RestClientMainWindow : public QMainWindow
 {
@@ -53,7 +54,7 @@ public slots:
     void slotReplyResponse();
     void slotReplyError(QNetworkReply::NetworkError error);
 
-    void slotHistoryLoad(QTreeWidgetItem*,int);
+    void slotHistoryLoad(QTreeWidgetItem*);
     void slotSelectedHistory();
     void slotHistoryRemoveSelected();
     void slotHistoryClear();
@@ -99,8 +100,11 @@ private:
     QAction *m_textView;
     QAction *m_csvView;
 
+    Request *m_request;
 
-    void loadHistory(const QString& );
+
+    void loadHistory(const QString& query = "");
+    void loadPairs(const QHash<QString, QString>& pair, ParamsList* list);
     void saveHistory(int resposeCode);
 
     void releaseReplyResources();

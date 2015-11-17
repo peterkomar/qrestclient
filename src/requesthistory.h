@@ -53,6 +53,58 @@
 #include <QCoreApplication>
 #include <QVector>
 
+class Request
+{
+public:
+    Request(const QString& url, const QString& method);
+    QString toString();
+    QString getContetnType();
+    QString responseHeadersAsString();
+
+    QString url() const { return m_url; }
+    QString method() const { return m_method; }
+
+
+    QString response() const { return m_response; }
+    void setResponse(const QString& response) { m_response = response; }
+
+    QString error() const { return m_error; }
+    void setError(const QString& error) { m_error = error; }
+
+    int responseCode() { return i_responseCode; }
+    void setResponseCode(int code) { i_responseCode = code; }
+
+    void setRaw(const QString& raw, const QString& type) { m_requestRaw = raw; m_requestRawType = type;}
+    QString raw() const { return m_requestRaw; }
+    QString rawType() const { return m_requestRawType; }
+
+    void addRequestHeader(const QString& key, const QString& value);
+    QHash<QString, QString> requestHeaders() const { return m_requestHeaders; }
+
+    void addResponseHeader(const QString& key, const QString& value);
+    QHash<QString, QString> responseHeaders() const { return m_responseHeaders; }
+
+    void addRequestParam(const QString& key, const QString& value);
+    QHash<QString, QString> requestParams() const { return m_requestParams; }
+
+    void setResponseHeadersString(const QString& headers) { m_responseHeadersString = headers; }
+
+private:
+    QString m_url;
+    QString m_method;
+    QString m_response;
+    QString m_error;
+    QHash<QString, QString> m_requestHeaders;
+    QHash<QString, QString> m_requestParams;
+    QString m_requestRaw;
+    QString m_requestRawType;
+    QHash<QString, QString> m_responseHeaders;
+    int i_responseCode;
+
+    //For support old versions
+    QString m_responseHeadersString;
+};
+
 class RequestHistory
 {
 public:
@@ -60,19 +112,19 @@ public:
     ~RequestHistory();
     void init();
 
-    QSqlDatabase& database();
-
-    int addRequest(const QString& url, const QString& method, int responseCode, const QString& response, const QString& error, const QString& headers);
-    void addParam(int requestId, const QString& name, const QString& value);
-    void addHeader(int requestId, const QString& name, const QString& value);
-    void addRaw(int requestId, const QString& contentType, const QString& rawBody);
+    void addRequest(Request *request);
     bool deleteHistory(const QVector<int> requestIds);
-    QString filterQuery(const QString& value);
-    QString getRequestDetails(int requestId);
+    QSqlQuery* getHistory(const QString& filter);
+    Request* getRequest(int requestId);
 
 private:
     bool connect(const QString& name);
     void createDataBase();
+    void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
+
+    //Migration functions block
+    void migrateTo2();
+    //End migration functions block
 
     QSqlDatabase m_database;
 };

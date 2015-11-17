@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+class QPlainTextEdit;
+
 class RequestDetailsDlg : public QDialog
 {
     Q_OBJECT
@@ -13,6 +15,10 @@ public:
 signals:
 
 public slots:
+    void slotSendToBuffer();
+
+private:
+    QPlainTextEdit *m_view;
 };
 
 #endif // REQUESTDETAILSDLG_H

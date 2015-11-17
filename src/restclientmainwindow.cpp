@@ -254,8 +254,9 @@ void RestClientMainWindow::setupBottomPabel()
     gridLayout->addWidget(m_filterEdit, 0, 1);
 
     m_historyWidget = new RestHistoryWidget;
-    connect(m_historyWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(slotHistoryLoad(QTreeWidgetItem*,int)));
+    connect(m_historyWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(slotHistoryLoad(QTreeWidgetItem*)));
     connect(m_historyWidget, SIGNAL(itemSelectionChanged()), this, SLOT(slotSelectedHistory()));
+    connect(m_historyWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(slotRequestDetails()));
     gridLayout->addWidget(m_historyWidget, 1,0,1,2);
 
     QAction *a0 = new QAction("Info", this);
@@ -272,6 +273,7 @@ void RestClientMainWindow::setupBottomPabel()
     connect(a0, SIGNAL(triggered()), this, SLOT(slotRequestDetails()));
 
     m_historyWidget->addContextMenuItem(a0);
+    m_historyWidget->addContextMenuSeparator();
     m_historyWidget->addContextMenuItem(a1);
     m_historyWidget->addContextMenuItem(a2);
     m_historyWidget->addContextMenuSeparator();
@@ -290,8 +292,10 @@ void RestClientMainWindow::setupBottomPabel()
 
     QMenu *history = menuBar()->addMenu("History");
     history->addAction(a0);
+    history->addSeparator();
     history->addAction(a1);
     history->addAction(a2);
+    history->addSeparator();
     history->addAction(a3);
 }
 
@@ -323,52 +327,27 @@ QWidget* RestClientMainWindow::buildParamsWidget(ParamsList *widget)
 
 void RestClientMainWindow::saveHistory(int code)
 {
-    QString url = m_editURL->text();
-    if( url.isEmpty() || url.left(4) != "http" ) {
-        QMessageBox::critical(this, "Error", "URL is incorrect");
-        return;
-    }
-
-    int requestId = m_history->addRequest(url,
-                                          m_comboRestMethod->currentText(),
-                                          code,
-                                          m_response->toText(),
-                                          m_errorResponse->toPlainText(),
-                                          m_responseHeaders->toHtml());
-
-    QTreeWidgetItemIterator it(m_params);
-    while (*it) {
-        m_history->addParam(requestId, (*it)->text(0), (*it)->text(1));
-        ++it;
-    }
-
-    QTreeWidgetItemIterator it2(m_headers);
-    while (*it2) {
-        m_history->addHeader(requestId, (*it2)->text(0), (*it2)->text(1));
-        ++it2;
-    }
-
-    m_history->addRaw(requestId, m_contetTypeCombo->currentText(), m_contentBody->toPlainText());
-    loadHistory("");
+    m_request->setResponseCode(code);
+    m_request->setResponse(m_response->toText());
+    m_request->setError(m_errorResponse->toPlainText());
+    m_history->addRequest(m_request);
     m_filterEdit->clear();
+    loadHistory();
 }
 
-void RestClientMainWindow::loadHistory(const QString& query)
-{
-    QSqlQuery q(m_history->database());
-    if( !q.exec(m_history->filterQuery(query)) ) {
-        throw "Error execute query";
-    }
-
+void RestClientMainWindow::loadHistory(const QString& filter)
+{    
+    QSqlQuery *q = m_history->getHistory(filter);
     m_historyWidget->clear();
-    while (q.next()) {
+    while (q->next()) {
         QTreeWidgetItem *item  = new QTreeWidgetItem(m_historyWidget);
-        item->setText(0, q.value(0).toString());
-        item->setText(1, q.value(3).toString());
-        item->setText(2, q.value(4).toString());
-        item->setText(3, q.value(2).toString());
-        item->setText(4, q.value(1).toString());
+        item->setText(0, q->value(0).toString());
+        item->setText(1, q->value(3).toString());
+        item->setText(2, q->value(4).toString());
+        item->setText(3, q->value(2).toString());
+        item->setText(4, q->value(1).toString());
     }
+    delete q;
 }
 
 void RestClientMainWindow::waitDialog()
@@ -395,6 +374,9 @@ void RestClientMainWindow::releaseReplyResources()
     m_waitDialog->close();
     delete m_waitDialog;
     m_waitDialog = 0;
+
+    delete m_request;
+    m_request = 0;
 }
 
 void RestClientMainWindow::clearItems(QList<QTreeWidgetItem *>& items)
@@ -466,6 +448,12 @@ void RestClientMainWindow::slotSendRequest()
 
     setTitle(m_comboRestMethod->currentText(), url);
 
+    if (m_request) {
+        delete m_request;
+        m_request = 0;
+    }
+    m_request = new Request(url, m_comboRestMethod->currentText());
+
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
 
     QUrl urlObject(url);
@@ -473,6 +461,7 @@ void RestClientMainWindow::slotSendRequest()
     QTreeWidgetItemIterator paramsIterator(m_params);
     while (*paramsIterator) {
         query.addQueryItem((*paramsIterator)->text(0), (*paramsIterator)->text(1));
+        m_request->addRequestParam((*paramsIterator)->text(0), (*paramsIterator)->text(1));
         ++paramsIterator;
     }
     urlObject.setQuery(query);
@@ -487,11 +476,13 @@ void RestClientMainWindow::slotSendRequest()
     QTreeWidgetItemIterator headerIterator(m_headers);
     while (*headerIterator) {
         request.setRawHeader((*headerIterator)->text(0).toUtf8(), (*headerIterator)->text(1).toUtf8());
+        m_request->addRequestHeader((*headerIterator)->text(0).toUtf8(), (*headerIterator)->text(1).toUtf8());
         ++headerIterator;
     }
 
     QByteArray rawBody  = m_contentBody->toPlainText().toUtf8();
     QString contentType = m_contetTypeCombo->currentText();
+    m_request->setRaw(rawBody, contentType);
 
     if( m_comboRestMethod->currentText() == "GET" ) {
         m_reply = manager->get(request);
@@ -532,6 +523,7 @@ void RestClientMainWindow::sendRawRequest(bool isPost,
         QByteArray postDataSize = QByteArray::number(raw.size());
         request.setRawHeader("Content-Type", contentType.toLatin1());
         request.setRawHeader("Content-Length", postDataSize);
+        m_request->addRequestHeader("Content-Length", postDataSize);
     }
 
     if (isPost) {
@@ -547,18 +539,15 @@ void RestClientMainWindow::renderResponseHeaders()
     QList<QByteArray> headers = m_reply->rawHeaderList();
 
     QString contetType;
-    m_responseHeaders->clear();
     for (int i = 0; i < headers.size(); ++i) {
-
         if( headers.at(i).toLower() == "content-type") {
             contetType = m_reply->rawHeader(headers.at(i));
         }
-
-        m_responseHeaders->append("<b>"+headers.at(i) + ":</b> " + m_reply->rawHeader(headers.at(i)));
+        m_request->addResponseHeader(headers.at(i), m_reply->rawHeader(headers.at(i)));
     }
-
-    m_responseHeaders->append("<b>Execution Time:</b> "+QString::number(m_time.msecsTo(time))+" ms");
+    m_request->addResponseHeader("Execution-Time", QString::number(m_time.msecsTo(time))+" ms");
     renderContentType(contetType);
+    m_responseHeaders->setText(m_request->responseHeadersAsString());
 }
 
 void RestClientMainWindow::slotFinishRequest()
@@ -594,9 +583,8 @@ void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
     }
 
     m_errorResponse->setText(error_string);
-    releaseReplyResources();
-
     saveHistory(error);
+    releaseReplyResources();
 }
 
 void RestClientMainWindow::slotSelectedHistory()
@@ -604,87 +592,51 @@ void RestClientMainWindow::slotSelectedHistory()
     QList<QTreeWidgetItem*> list = m_historyWidget->selectedItems();
     if (!list.isEmpty()) {
        QTreeWidgetItem *item = list.takeFirst();
-       slotHistoryLoad(item, 0);
+       slotHistoryLoad(item);
     }
 }
 
-
-void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
+void RestClientMainWindow::loadPairs(const QHash<QString, QString>& pair, ParamsList* list)
 {
-    QSqlQuery q(m_history->database());
-    q.prepare("SELECT * FROM requests WHERE id = :id");
-    q.bindValue(":id", item->text(0));
-    if( !q.exec() ) {
-        throw "Error execute query";
-    }
-
-    if( !q.first() ) {
-        return;
-    }
-
-    QString headers = q.value(7).toString();
-    QString type = "text";
-    int pos = 0;
-
-    if((pos = headers.indexOf("content-type:", 0, Qt::CaseInsensitive)) != -1) {
-        int end = headers.indexOf("\n", pos+1);
-        type = headers.mid(pos, end-pos).trimmed();
-    }
-
-    m_editURL->setText(q.value(4).toString());
-    m_comboRestMethod->setCurrentText(q.value(3).toString());
-    m_response->setText(q.value(5).toString());
-    m_errorResponse->setText(q.value(6).toString());
-    m_responseHeaders->setText(q.value(7).toString());
-
-    renderContentType(type);
-
     QTreeWidgetItem *i = 0;
+    list->clear();
+    QHashIterator<QString, QString> iterator(pair);
+    while (iterator.hasNext()) {
+        iterator.next();
+        i  = new QTreeWidgetItem(list);
+        i->setText(0, iterator.key());
+        i->setText(1, iterator.value());
+    }
+}
+
+void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item)
+{
+    try {
+      m_request = m_history->getRequest(item->text(0).toInt());
+    } catch(bool ) {
+        return;//Not found
+    }
+
+    m_editURL->setText(m_request->url());
+    m_comboRestMethod->setCurrentText(m_request->method());
+    m_response->setText(m_request->response());
+    m_errorResponse->setText(m_request->error());
+    m_responseHeaders->setText(m_request->responseHeadersAsString());
+    renderContentType(m_request->getContetnType());
+
     //load params
-    q.prepare("SELECT * FROM requests_params WHERE request_id = :id");
-    q.bindValue(":id", item->text(0));
-    if( !q.exec() ) {
-        throw "Error execute query";
-    }
-    m_params->clear();
-    while (q.next()) {
-        i  = new QTreeWidgetItem(m_params);
-        i->setText(0, q.value(1).toString());
-        i->setText(1, q.value(2).toString());
-    }
+    loadPairs(m_request->requestParams(), m_params);
+    //Load headers
+    loadPairs(m_request->requestHeaders(), m_headers);
 
-    //load headers
-    q.prepare("SELECT * FROM request_headers WHERE request_id = :id");
-    q.bindValue(":id", item->text(0));
-    if( !q.exec() ) {
-        throw "Error execute query";
-    }
-    m_headers->clear();
-    while (q.next()) {
-        i  = new QTreeWidgetItem(m_headers);
-        i->setText(0, q.value(1).toString());
-        i->setText(1, q.value(2).toString());
-    }
+    m_contentBody->setText(m_request->raw());
 
-    q.prepare("SELECT * FROM request_raw WHERE request_id = :id");
-    q.bindValue(":id", item->text(0));
-    if( !q.exec() ) {
-        throw "Error execute query";
-    }
-
-    m_contentBody->clear();
-    if( !q.first() ) {
-        return;
-    }
-
-    QString s = q.value(2).toString();
+    QString s = m_request->rawType();
     if(m_contetTypeCombo->findText(s) != -1) {
         m_contetTypeCombo->setCurrentText(s);
     } else {
         m_contetTypeCombo->addItem(s);
     }
-
-    m_contentBody->setText(q.value(1).toString());
 }
 
 void RestClientMainWindow::slotRequestDetails()
@@ -697,9 +649,12 @@ void RestClientMainWindow::slotRequestDetails()
     QTreeWidgetItem *item = list.first();
 
     RequestDetailsDlg *dlg = new RequestDetailsDlg(this);
-    dlg->setRequest(m_history->getRequestDetails(item->text(0).toInt()));
+    Request* request = m_history->getRequest(item->text(0).toInt());
+    dlg->setRequest(request->toString());
+    dlg->setWindowTitle(tr("Details: %1").arg(item->text(2).toHtmlEscaped()));
     dlg->exec();
-    delete dlg;
+    delete request;
+    delete dlg;    
 }
 
 void RestClientMainWindow::slotHistoryRemoveSelected()
@@ -731,10 +686,8 @@ void RestClientMainWindow::slotHistoryClear()
     for( int i=0; i < countItems; i++ ) {
         list.append(m_historyWidget->topLevelItem(i));
     }
-
     clearItems(list);
-
-    loadHistory("");
+    loadHistory();
     m_filterEdit->clear();
 
     QApplication::restoreOverrideCursor();

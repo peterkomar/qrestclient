@@ -19,6 +19,98 @@
  ***************************************************************************/
 #include "requesthistory.h"
 
+#include <QUrlQuery>
+
+Request::Request(const QString& url, const QString& method)
+    :m_url(url)
+    ,m_method(method)
+{}
+
+QString Request::toString()
+{
+    QString res;
+
+    res = "HTTP Request\n\n";
+    res += m_method + " " + m_url + "\n\n";
+    //Build headers
+    QHashIterator<QString, QString> i(m_requestHeaders);
+    while (i.hasNext()) {
+        i.next();
+        res += i.key() + ": " + i.value() +"\n";
+    }
+
+    if (!m_requestParams.isEmpty()) {
+        QUrlQuery query;
+        QHashIterator<QString, QString> i(m_requestParams);
+        while (i.hasNext()) {
+            i.next();
+            query.addQueryItem(i.key(), i.value());
+        }
+
+        res += "Encoded Uri: " + query.query(QUrl::FullyEncoded).toUtf8() + "\n";
+        res += "Decoded Uri: " + query.query(QUrl::FullyDecoded).toUtf8();
+    }
+
+    res += "\n";
+    QString raw = m_requestRaw.simplified();
+    if (raw.isEmpty()) {
+        res += raw + "\n";
+    }
+
+
+    return res;
+}
+
+QString Request::responseHeadersAsString()
+{
+    //Supports old version
+    if (!m_responseHeadersString.isEmpty()) {
+        return m_responseHeadersString;
+    } else {
+        QString res;
+        QHashIterator<QString, QString> i(m_responseHeaders);
+        while (i.hasNext()) {
+            i.next();
+            res += "<b>"+i.key() + ":</b> " + i.value() +"<br />";
+        }
+        return res;
+    }
+}
+
+QString Request::getContetnType()
+{
+    QString type = "text";
+    //Support old version
+    if (!m_responseHeadersString.isEmpty()) {
+        int pos = 0;
+
+        if((pos = m_responseHeadersString.indexOf("content-type:", 0, Qt::CaseInsensitive)) != -1) {
+            int end = m_responseHeadersString.indexOf("\n", pos+1);
+            type = m_responseHeadersString.mid(pos, end-pos).trimmed();
+        }
+    } else {
+        if (m_responseHeaders.contains("Content-Type")) {
+            type = m_responseHeaders["Content-Type"];
+        }
+    }
+    return type;
+}
+void Request::addRequestHeader(const QString& key, const QString& value)
+{
+    m_requestHeaders.insert(key, value);
+}
+
+void Request::addResponseHeader(const QString& key, const QString& value)
+{
+    m_responseHeaders.insert(key, value);
+}
+
+void Request::addRequestParam(const QString& key, const QString& value)
+{
+    m_requestParams.insert(key, value);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
 
 RequestHistory::RequestHistory()
 {
@@ -49,11 +141,6 @@ void RequestHistory::init()
     }
 }
 
-QSqlDatabase& RequestHistory::database()
-{
-    return m_database;
-}
-
 bool RequestHistory::connect(const QString &dbName)
 {
     m_database = QSqlDatabase::addDatabase("QSQLITE", dbName);
@@ -67,7 +154,23 @@ bool RequestHistory::connect(const QString &dbName)
         return false;
     }
 
+    migrateTo2();
+
     return true;
+}
+
+void RequestHistory::migrateTo2()
+{
+    QStringList tables = m_database.tables();
+    if (tables.contains("response_headers")) {
+        return;
+    }
+
+    QSqlQuery query(m_database);
+    query.exec("CREATE TABLE response_headers ("
+               "request_id int,"
+               "name varchar,"
+               "value varchar)");
 }
 
 void RequestHistory::createDataBase()
@@ -84,7 +187,6 @@ void RequestHistory::createDataBase()
                 "url varchar,"
                 "response mediumtext,"
                 "error varchar,"
-                "headers mediumtext"
     ")"
     << "CREATE TABLE requests_params ("
                 "request_id int,"
@@ -92,6 +194,11 @@ void RequestHistory::createDataBase()
                 "value varchar"
     ")"
     << "CREATE TABLE request_headers ("
+                "request_id int,"
+                "name varchar,"
+                "value varchar"
+    ")"
+    << "CREATE TABLE response_headers ("
                 "request_id int,"
                 "name varchar,"
                 "value varchar"
@@ -111,8 +218,8 @@ void RequestHistory::createDataBase()
     }
 }
 
-int RequestHistory::addRequest(const QString &url, const QString &method, int responseCode, const QString& response,  const QString& error, const QString& headers)
-{
+void RequestHistory::addRequest(Request *request)
+{    
     QSqlQuery q(m_database);
 
     q.prepare("SELECT max(id) FROM requests");
@@ -128,86 +235,60 @@ int RequestHistory::addRequest(const QString &url, const QString &method, int re
 
     ++index;
 
-    q.prepare(""
-     "INSERT INTO requests (id, date, code, type, url, response, error, headers)"
-     " VALUES (:id, :date, :code, :type, :url, :response, :error, :headers)"
+    m_database.transaction();
+    QSqlQuery *query = new QSqlQuery(m_database);
+
+    bool result = true;
+    query->prepare(""
+     "INSERT INTO requests (id, date, code, type, url, response, error)"
+     " VALUES (:id, :date, :code, :type, :url, :response, :error)"
     );
+    query->bindValue(":id", index);
+    query->bindValue(":date", QDateTime::currentDateTime().toString());
+    query->bindValue(":code", request->responseCode());
+    query->bindValue(":type", request->method());
+    query->bindValue(":url", request->url());
+    query->bindValue(":response", request->response());
+    query->bindValue(":error", request->error());
+    query->exec();
 
-    q.bindValue(":id", index);
-    q.bindValue(":date", QDateTime::currentDateTime().toString());
-    q.bindValue(":code", responseCode);
-    q.bindValue(":type", method);
-    q.bindValue(":url", url);
-    q.bindValue(":response", response);
-    q.bindValue(":error", error);
-    q.bindValue(":headers", headers);
+    addRequestPairs(index, query, "requests_params", request->requestParams());
+    addRequestPairs(index, query, "request_headers", request->requestHeaders());
+    addRequestPairs(index, query, "response_headers", request->responseHeaders());
 
-    if( !q.exec() ) {
-        qDebug() << "Error execution query: " << q.lastQuery() << " Error: " << q.lastError();
-        throw "Error execution query";
-    }
-
-    return index;
-}
-
-void RequestHistory::addParam(int requestId, const QString &name, const QString &value)
-{
-    QSqlQuery q(m_database);
-
-    q.prepare(""
-     "INSERT INTO requests_params (request_id, name, value)"
-     " VALUES (:request_id, :name, :value)"
-    );
-
-    q.bindValue(":request_id", requestId);
-    q.bindValue(":name", name);
-    q.bindValue(":value", value);
-
-    if( !q.exec() ) {
-        qDebug() << "Error execution query: " << q.lastQuery() << " Error: " << q.lastError();
-        throw "Error execution query";
-    }
-}
-
-void RequestHistory::addHeader(int requestId, const QString &name, const QString &value)
-{
-    QSqlQuery q(m_database);
-
-    q.prepare(""
-     "INSERT INTO request_headers (request_id, name, value)"
-     " VALUES (:request_id, :name, :value)"
-    );
-
-    q.bindValue(":request_id", requestId);
-    q.bindValue(":name", name);
-    q.bindValue(":value", value);
-
-    if( !q.exec() ) {
-        qDebug() << "Error execution query: " << q.lastQuery() << " Error: " << q.lastError();
-        throw "Error execution query";
-    }
-}
-
-void RequestHistory::addRaw(int requestId, const QString &contentType, const QString &rawBody)
-{
-    if( contentType.isEmpty() || rawBody.isEmpty() ) {
-        return;
-    }
-
-    QSqlQuery q(m_database);
-
-    q.prepare(""
+    //Add raw request
+    query->prepare(""
      "INSERT INTO request_raw (request_id, body, type_content)"
      " VALUES (:request_id, :body, :type_content)"
     );
+    query->bindValue(":request_id", index);
+    query->bindValue(":body", request->raw());
+    query->bindValue(":type_content", request->rawType());
+    query->exec();
 
-    q.bindValue(":request_id", requestId);
-    q.bindValue(":body", rawBody);
-    q.bindValue(":type_content", contentType);
+    result = m_database.commit();
+    if (!result) {
+        qDebug() << "Failed to execute: " << query->lastError().text();
+        m_database.rollback();
+    }
 
-    if( !q.exec() ) {
-        qDebug() << "Error execution query: " << q.lastQuery() << " Error: " << q.lastError();
-        throw "Error execution query";
+    delete query;
+}
+
+void RequestHistory::addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair)
+{
+    QHashIterator<QString, QString> i(pair);
+    while (i.hasNext()) {
+        i.next();
+        query->prepare(""
+         "INSERT INTO "+name+" (request_id, name, value)"
+         " VALUES (:request_id, :name, :value)"
+        );
+
+        query->bindValue(":request_id", requestId);
+        query->bindValue(":name", i.key());
+        query->bindValue(":value", i.value());
+        query->exec();
     }
 }
 
@@ -226,7 +307,8 @@ bool RequestHistory::deleteHistory(const QVector<int> requestIds)
     queries << QString("DELETE FROM requests WHERE id IN (%1)").arg(ids)
             << QString("DELETE FROM requests_params WHERE request_id IN (%1)").arg(ids)
             << QString("DELETE FROM request_headers WHERE request_id IN (%1)").arg(ids)
-            << QString("DELETE FROM request_raw WHERE request_id IN (%1)").arg(ids);
+            << QString("DELETE FROM request_raw WHERE request_id IN (%1)").arg(ids)
+            << QString("DELETE FROM response_headers WHERE request_id IN (%1)").arg(ids);
 
     QStringList::const_iterator constIterator;
     bool sqlOk = true;
@@ -238,34 +320,93 @@ bool RequestHistory::deleteHistory(const QVector<int> requestIds)
 
     query.clear();
     if (sqlOk) {
-        sqlOk = database().commit();
+        sqlOk = m_database.commit();
     }
 
     if(!sqlOk) {
         qDebug() << "Failed to execute: " << query.lastError().text();
-        database().rollback();
+        m_database.rollback();
     }
     query.exec("vacuum");
 
     return true;
 }
 
-QString RequestHistory::filterQuery(const QString& value)
+QSqlQuery* RequestHistory::getHistory(const QString& filter)
 {
     QString order = "ORDER By id DESC";
     QString where = "";
-    if (!value.isEmpty()) {
+    if (!filter.isEmpty()) {
         where = QString("WHERE id ='%1' "
                         "OR date LIKE '%%1%' "
                         "OR code = '%1' "
                         "OR type LIKE '%1' "
-                        "OR url LIKE '%%1%'").arg(value);
+                        "OR url LIKE '%%1%'").arg(filter);
     }
 
-    return QString("SELECT * FROM requests %1 %2").arg(where).arg(order);
+    QSqlQuery *query = new QSqlQuery(m_database);
+    if( !query->exec(QString("SELECT * FROM requests %1 %2").arg(where).arg(order)) ) {
+        throw "Error execute query";
+    }
+    return query;
 }
 
-QString RequestHistory::getRequestDetails(int requestId)
+Request* RequestHistory::getRequest(int requestId)
 {
-    return QString("Test");
+    QSqlQuery q(m_database);
+    q.prepare("SELECT * FROM requests WHERE id = :id");
+    q.bindValue(":id", requestId);
+    if( !q.exec() ) {
+        throw "Error execute query";
+    }
+
+    if( !q.first() ) {
+        throw false;//Request not found
+    }
+
+    Request *request = new Request(q.value(4).toString(), q.value(3).toString());
+    request->setResponse(q.value(5).toString());
+    request->setResponseCode(q.value(2).toInt());
+    request->setError(q.value(6).toString());
+    request->setResponseHeadersString(q.value(7).toString());
+
+    //load params
+    q.prepare("SELECT * FROM requests_params WHERE request_id = :id");
+    q.bindValue(":id", requestId);
+    if( !q.exec() ) {
+        throw "Error execute query";
+    }
+    while (q.next()) {
+        request->addRequestParam(q.value(1).toString(), q.value(2).toString());
+    }
+
+    //load headers
+    q.prepare("SELECT * FROM request_headers WHERE request_id = :id");
+    q.bindValue(":id", requestId);
+    if( !q.exec() ) {
+        throw "Error execute query";
+    }
+    while (q.next()) {
+        request->addRequestHeader(q.value(1).toString(), q.value(2).toString());
+    }
+
+    //load response headers
+    q.prepare("SELECT * FROM response_headers WHERE request_id = :id");
+    q.bindValue(":id", requestId);
+    if( !q.exec() ) {
+        throw "Error execute query";
+    }
+    while (q.next()) {
+        request->addResponseHeader(q.value(1).toString(), q.value(2).toString());
+    }
+
+    q.prepare("SELECT * FROM request_raw WHERE request_id = :id");
+    q.bindValue(":id", requestId);
+    if( !q.exec() ) {
+        throw "Error execute query";
+    }
+    if( q.first() ) {
+        request->setRaw(q.value(1).toString(), q.value(2).toString());
+    }
+    return request;
 }
