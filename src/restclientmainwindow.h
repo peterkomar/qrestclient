@@ -60,6 +60,7 @@ public slots:
     void slotFilterHistoryItems(const QString& );
     void slotShowHistoryFilter();
     void slotHideHistoryFilter();
+    void slotRequestDetails();
 
     void slotViewJson();
     void slotViewText();

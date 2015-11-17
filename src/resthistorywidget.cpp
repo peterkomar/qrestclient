@@ -45,21 +45,6 @@ RestHistoryWidget::RestHistoryWidget(QWidget *parent) :
 
     setSelectionMode(QAbstractItemView::ExtendedSelection);
     menu = new QMenu;
-
-    /*QAction *a1 = new QAction("Remove selected items", this);
-    QAction *a2 = new QAction("Clear history", this);
-    QAction *a3 = new QAction("Find", this);
-    a3->setShortcut(QKeySequence(QKeySequence::Find));
-
-    connect(a1, SIGNAL(triggered()), this, SLOT(slotRemoveItems()));
-    connect(a2, SIGNAL(triggered()), this, SLOT(slotRemoveAllItems()));
-    connect(a3, SIGNAL(triggered()), this, SLOT(slotFindItems()));
-
-    menu = new QMenu;
-    menu->addAction(a1);
-    menu->addAction(a2);
-    menu->addSeparator();
-    menu->addAction(a3);*/
 }
 
 void RestHistoryWidget::addContextMenuItem(QAction *action)

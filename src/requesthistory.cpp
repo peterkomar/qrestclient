@@ -264,3 +264,8 @@ QString RequestHistory::filterQuery(const QString& value)
 
     return QString("SELECT * FROM requests %1 %2").arg(where).arg(order);
 }
+
+QString RequestHistory::getRequestDetails(int requestId)
+{
+    return QString("Test");
+}

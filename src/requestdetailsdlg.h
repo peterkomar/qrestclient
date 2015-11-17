@@ -1,13 +1,14 @@
 #ifndef REQUESTDETAILSDLG_H
 #define REQUESTDETAILSDLG_H
 
-#include <QWidget>
+#include <QDialog>
 
-class RequestDetailsDlg : public QWidget
+class RequestDetailsDlg : public QDialog
 {
     Q_OBJECT
 public:
     explicit RequestDetailsDlg(QWidget *parent = 0);
+    void setRequest(const QString& text);
 
 signals:
 

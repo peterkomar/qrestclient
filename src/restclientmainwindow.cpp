@@ -23,6 +23,7 @@
 #include "resthistorywidget.h"
 #include "requesthistory.h"
 #include "responsewidget.h"
+#include "requestdetailsdlg.h"
 
 #include <QTextEdit>
 #include <QVBoxLayout>
@@ -257,6 +258,8 @@ void RestClientMainWindow::setupBottomPabel()
     connect(m_historyWidget, SIGNAL(itemSelectionChanged()), this, SLOT(slotSelectedHistory()));
     gridLayout->addWidget(m_historyWidget, 1,0,1,2);
 
+    QAction *a0 = new QAction("Info", this);
+    a0->setShortcut(QKeySequence::Open);
     QAction *a1 = new QAction("Remove selected items", this);
     a1->setShortcut(QKeySequence::Delete);
     QAction *a2 = new QAction("Clear history", this);
@@ -266,7 +269,9 @@ void RestClientMainWindow::setupBottomPabel()
     connect(a1, SIGNAL(triggered()), this, SLOT(slotHistoryRemoveSelected()));
     connect(a2, SIGNAL(triggered()), this, SLOT(slotHistoryClear()));
     connect(a3, SIGNAL(triggered()), this, SLOT(slotShowHistoryFilter()));
+    connect(a0, SIGNAL(triggered()), this, SLOT(slotRequestDetails()));
 
+    m_historyWidget->addContextMenuItem(a0);
     m_historyWidget->addContextMenuItem(a1);
     m_historyWidget->addContextMenuItem(a2);
     m_historyWidget->addContextMenuSeparator();
@@ -284,6 +289,7 @@ void RestClientMainWindow::setupBottomPabel()
     addDockWidget(Qt::BottomDockWidgetArea, dock);
 
     QMenu *history = menuBar()->addMenu("History");
+    history->addAction(a0);
     history->addAction(a1);
     history->addAction(a2);
     history->addAction(a3);
@@ -679,6 +685,21 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
     }
 
     m_contentBody->setText(q.value(1).toString());
+}
+
+void RestClientMainWindow::slotRequestDetails()
+{
+    QList<QTreeWidgetItem *> list = m_historyWidget->selectedItems();
+    if( list.isEmpty() ) {
+        return;
+    }
+
+    QTreeWidgetItem *item = list.first();
+
+    RequestDetailsDlg *dlg = new RequestDetailsDlg(this);
+    dlg->setRequest(m_history->getRequestDetails(item->text(0).toInt()));
+    dlg->exec();
+    delete dlg;
 }
 
 void RestClientMainWindow::slotHistoryRemoveSelected()

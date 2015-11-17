@@ -17,7 +17,8 @@ SOURCES += main.cpp \
     qjsonview.cpp \
     responsewidget.cpp \
     qcsvview.cpp \
-    paramdlg.cpp
+    paramdlg.cpp \
+    requestdetailsdlg.cpp
 QT += network \
     sql \
     widgets
@@ -29,7 +30,8 @@ HEADERS += \
     qjsonview.h \
     responsewidget.h \
     qcsvview.h \
-    paramdlg.h
+    paramdlg.h \
+    requestdetailsdlg.h
 RESOURCES += application.qrc
 FORMS +=
 
