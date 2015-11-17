@@ -57,7 +57,6 @@ QString Request::toString()
         res += raw + "\n";
     }
 
-
     return res;
 }
 
