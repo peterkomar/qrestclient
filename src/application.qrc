@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>rest.png</file>
+        <file>clipboard_32.png</file>
+        <file>cloud302_32.png</file>
     </qresource>
 </RCC>

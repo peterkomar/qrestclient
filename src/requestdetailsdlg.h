@@ -35,6 +35,7 @@ signals:
 
 public slots:
     void slotSendToBuffer();
+    void slotSendToGist();
 
 private:
     QTextEdit *m_viewRequest;

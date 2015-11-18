@@ -35,12 +35,21 @@ RequestDetailsDlg::RequestDetailsDlg(Request* request, QWidget *parent)
 
     QHBoxLayout *phLayout = new QHBoxLayout;
 
-    QPushButton *cliboard = new QPushButton("Copy", this);
+    QPushButton *cliboard = new QPushButton(QIcon(":/clipboard_32.png"), "", this);
+    cliboard->setAutoDefault(false);
     cliboard->setToolTip(tr("Copy details to clipboard"));
     cliboard->setWhatsThis(tr("Send request/response to cliboard"));
     connect(cliboard, SIGNAL(clicked()), this, SLOT(slotSendToBuffer()));
 
+    QPushButton *share = new QPushButton(QIcon(":/cloud302_32.png"), "", this);
+    share->setAutoDefault(false);
+    share->setToolTip(tr("Share request to gist"));
+    share->setWhatsThis(tr("hare request to gist"));
+    connect(share, SIGNAL(clicked()), this, SLOT(slotSendToGist()));
+
     phLayout->addWidget(cliboard);
+    phLayout->addSpacing(2);
+    phLayout->addWidget(share);
 
     m_viewRequest = new QTextEdit(this);
     m_viewRequest->setFont(QFont("Monospace"));
@@ -57,6 +66,8 @@ RequestDetailsDlg::RequestDetailsDlg(Request* request, QWidget *parent)
     gridLayout->addItem(phLayout, 0, 0, 1, 2, Qt::AlignLeft);
     gridLayout->addWidget(m_viewRequest, 1, 0, 1, 1);
     gridLayout->addWidget(m_viewResponse, 1, 1, 1, 1);
+    gridLayout->setContentsMargins(0,0,0,0);
+    gridLayout->setMargin(0);
     resize(900, 500);
 }
 
@@ -64,5 +75,10 @@ void RequestDetailsDlg::slotSendToBuffer()
 {
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(m_request->toString());
+}
+
+void RequestDetailsDlg::slotSendToGist()
+{
+
 }
 
