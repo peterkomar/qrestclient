@@ -17,31 +17,34 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef REQUESTDETAILSDLG_H
-#define REQUESTDETAILSDLG_H
+#ifndef GIST_H
+#define GIST_H
 
-#include <QDialog>
+#include <QObject>
 
-class QTextEdit;
 class Request;
+class RestClient;
 
-class RequestDetailsDlg : public QDialog
+class Gist : public QObject
 {
     Q_OBJECT
 public:
-    explicit RequestDetailsDlg(Request* request, QWidget *parent = 0);
+    explicit Gist(QObject *parent = 0);
+    ~Gist();
+    void sendRequest(Request *request);
 
 signals:
+    void published(const QString& url);
 
 public slots:
-    void slotSendToBuffer();
-    void slotSendToGist();
-    void slotGistUrl(const QString& );
+    void slotFinish();
 
 private:
-    QTextEdit *m_viewRequest;
-    QTextEdit *m_viewResponse;
-    Request* m_request;
+    RestClient *m_rest;
+    Request *m_request;
+
+    QString toJson(Request *request);
+    QString getGistUrl(const QString& );
 };
 
-#endif // REQUESTDETAILSDLG_H
+#endif // GIST_H

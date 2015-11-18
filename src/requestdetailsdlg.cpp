@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "requestdetailsdlg.h"
 #include "request.h"
+#include "gist.h"
 
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QPushButton>
@@ -26,6 +27,7 @@
 #include <QClipboard>
 #include <QApplication>
 #include <QPushButton>
+#include <QMessageBox>
 
 RequestDetailsDlg::RequestDetailsDlg(Request* request, QWidget *parent)
     : QDialog(parent)
@@ -37,14 +39,14 @@ RequestDetailsDlg::RequestDetailsDlg(Request* request, QWidget *parent)
 
     QPushButton *cliboard = new QPushButton(QIcon(":/clipboard_32.png"), "", this);
     cliboard->setAutoDefault(false);
-    cliboard->setToolTip(tr("Copy details to clipboard"));
+    cliboard->setToolTip(tr("Copy details of request/response to clipboard"));
     cliboard->setWhatsThis(tr("Send request/response to cliboard"));
     connect(cliboard, SIGNAL(clicked()), this, SLOT(slotSendToBuffer()));
 
     QPushButton *share = new QPushButton(QIcon(":/cloud302_32.png"), "", this);
     share->setAutoDefault(false);
-    share->setToolTip(tr("Share request to gist"));
-    share->setWhatsThis(tr("hare request to gist"));
+    share->setToolTip(tr("Share request at gist"));
+    share->setWhatsThis(tr("Share request at gist"));
     connect(share, SIGNAL(clicked()), this, SLOT(slotSendToGist()));
 
     phLayout->addWidget(cliboard);
@@ -79,6 +81,15 @@ void RequestDetailsDlg::slotSendToBuffer()
 
 void RequestDetailsDlg::slotSendToGist()
 {
+    Gist *gist = new Gist(this);
+    connect(gist, SIGNAL(published(QString)), this, SLOT(slotGistUrl(QString)));
+    gist->sendRequest(m_request);
+}
 
+void RequestDetailsDlg::slotGistUrl(const QString& url)
+{
+    QMessageBox::information(this, tr("Gist"), QString("%1: <a href=\"%2\">%2<a>")
+                             .arg(tr("Gist created at"))
+                             .arg(url));
 }
 

@@ -26,7 +26,8 @@ SOURCES += main.cpp \
     menu.cpp \
     mainpanel.cpp \
     restclient.cpp \
-    request.cpp
+    request.cpp \
+    gist.cpp
 QT += network \
     sql \
     widgets
@@ -47,7 +48,8 @@ HEADERS += \
     menu.h \
     mainpanel.h \
     restclient.h \
-    request.h
+    request.h \
+    gist.h
 RESOURCES += application.qrc
 FORMS +=
 
