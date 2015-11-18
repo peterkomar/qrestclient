@@ -22,25 +22,19 @@
 #define RESTCLIENTMAINWINDOW_H
 
 #include <QMainWindow>
-#include <QNetworkReply>
-#include <QTime>
 
-class QTextEdit;
 class RequestHistory;
-class QLineEdit;
-class QComboBox;
 class ParamsList;
-class RestHistoryWidget;
-class RequestHistory;
 class QTreeWidgetItem;
 class QMessageBox;
-class QTabWidget;
-class ResponseWidget;
 class Request;
 class ToolBar;
 class LeftPanel;
 class RightPanel;
 class BottomPabel;
+class Menu;
+class MainPanel;
+class RestClient;
 
 class RestClientMainWindow : public QMainWindow
 {
@@ -52,11 +46,9 @@ public:
 signals:
 
 public slots:
-     //Requests slots
-    void slotFinishRequest();
+    //Requests slots
     void slotSendRequest();
-    void slotReplyResponse();
-    void slotReplyError(QNetworkReply::NetworkError error);
+    void slotFinishRequest();
 
     void slotHistoryLoad(QTreeWidgetItem*);
     void slotSelectedHistory();
@@ -86,46 +78,19 @@ private:
     LeftPanel *m_leftPanel;
     RightPanel *m_rightPanel;
     BottomPabel *m_bottomPanel;
-
-
-    ResponseWidget *m_response;
-    QTextEdit *m_errorResponse;
-
+    Menu *m_menu;
+    MainPanel *m_mainPanel;
+    RestClient *m_restClient;
     RequestHistory *m_history;
-    QNetworkReply *m_reply;
-
-    QTime m_time;
-
-    QAction *m_jsonView;
-    QAction *m_textView;
-    QAction *m_csvView;
-
     Request *m_request;
-
 
     void loadHistory(const QString& query = "");
     void loadPairs(const QHash<QString, QString>& pair, ParamsList* list);
-    void saveHistory(int resposeCode);
-
-    void releaseReplyResources();
+    void saveHistory();
     void waitDialog();
-
-    void _gui();
-
-    void setupMenu();
-    void sendRawRequest(bool isPost,
-                        QNetworkAccessManager *manager,
-                        QNetworkRequest& request,
-                        const QUrlQuery& query,
-                        const QByteArray& rawBody,
-                        const QString& contentType);
-
     void clearItems(QList<QTreeWidgetItem*>& items);
     void parseUrlParams();
-
     void renderContentType(const QString& contentType);
-
-    void renderResponseHeaders();
     void setTitle(const QString& method, const QString& url);
 };
 

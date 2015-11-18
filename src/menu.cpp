@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by peter komar                                     *
+ *   Copyright (C) 2015 by peter komar                                     *
  *   udldevel@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,46 +17,43 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef REQUESTHISTORY_H
-#define REQUESTHISTORY_H
+#include "menu.h"
+#include "restclientmainwindow.h"
 
-#include <QSqlError>
-#include <QSqlRecord>
-#include <QDebug>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QCryptographicHash>
-#include <QSettings>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QCoreApplication>
-#include <QVector>
+#include <QMenuBar>
+#include <QActionGroup>
+#include <QAction>
 
-class Request;
-
-class RequestHistory
+Menu::Menu(RestClientMainWindow* app)
 {
-public:
-    RequestHistory();
-    ~RequestHistory();
-    void init();
+    QMenu *view = app->menuBar()->addMenu(QObject::tr("View"));
 
-    void addRequest(Request *request);
-    bool deleteHistory(const QVector<int> requestIds);
-    QSqlQuery* getHistory(const QString& filter);
-    Request* getRequest(int requestId);
+    m_jsonView = new QAction("Json", app);
+    m_textView = new QAction("Text", app);
+    m_csvView  = new QAction("CSV", app);
 
-private:
-    bool connect(const QString& name);
-    void createDataBase();
-    void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
+    QActionGroup *viewGroup = new QActionGroup(app);
+    viewGroup->addAction(m_jsonView);
+    viewGroup->addAction(m_textView);
+    viewGroup->addAction(m_csvView);
 
-    //Migration functions block
-    void migrateTo2();
-    //End migration functions block
+    m_jsonView->setCheckable(true);
+    m_textView->setCheckable(true);
+    m_csvView->setCheckable(true);
 
-    QSqlDatabase m_database;
-};
+    m_textView->setChecked(true);
 
-#endif // REQUESTHISTORY_H
+    view->addAction(m_jsonView);
+    view->addAction(m_textView);
+    view->addAction(m_csvView);
+
+    QObject::connect(m_jsonView, SIGNAL(triggered()), app, SLOT(slotViewJson()));
+    QObject::connect(m_textView, SIGNAL(triggered()), app, SLOT(slotViewText()));
+    QObject::connect(m_csvView,  SIGNAL(triggered()), app, SLOT(slotViewCsv()));
+
+    QAction *a = new QAction(QObject::tr("About"), app);
+    QMenu *m = app->menuBar()->addMenu(QObject::tr("Help"));
+    m->addAction(a);
+    QObject::connect(a, SIGNAL(triggered()), app, SLOT(slotAbout()));
+}
+

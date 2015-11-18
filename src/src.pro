@@ -22,7 +22,11 @@ SOURCES += main.cpp \
     toolbar.cpp \
     leftpanel.cpp \
     rightpanel.cpp \
-    bottompabel.cpp
+    bottompabel.cpp \
+    menu.cpp \
+    mainpanel.cpp \
+    restclient.cpp \
+    request.cpp
 QT += network \
     sql \
     widgets
@@ -39,7 +43,11 @@ HEADERS += \
     toolbar.h \
     leftpanel.h \
     rightpanel.h \
-    bottompabel.h
+    bottompabel.h \
+    menu.h \
+    mainpanel.h \
+    restclient.h \
+    request.h
 RESOURCES += application.qrc
 FORMS +=
 

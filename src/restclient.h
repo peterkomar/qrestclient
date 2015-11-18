@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by peter komar                                     *
+ *   Copyright (C) 2015 by peter komar                                     *
  *   udldevel@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,46 +17,41 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef REQUESTHISTORY_H
-#define REQUESTHISTORY_H
+#ifndef RESTCLIENT_H
+#define RESTCLIENT_H
 
-#include <QSqlError>
-#include <QSqlRecord>
-#include <QDebug>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QCryptographicHash>
-#include <QSettings>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QCoreApplication>
-#include <QVector>
+#include <QObject>
+#include <QNetworkReply>
 
 class Request;
+class QTime;
 
-class RequestHistory
+class RestClient : public QObject
 {
+    Q_OBJECT
 public:
-    RequestHistory();
-    ~RequestHistory();
-    void init();
+    explicit RestClient(QObject *parent = 0);
+    void abort();
+    void sendRequest(Request *request);
 
-    void addRequest(Request *request);
-    bool deleteHistory(const QVector<int> requestIds);
-    QSqlQuery* getHistory(const QString& filter);
-    Request* getRequest(int requestId);
+signals:
+    void finish();
+
+public slots:
+    void slotReplyResponse();
+    void slotReplyError(QNetworkReply::NetworkError error);
+    void slotFinishRequest();
 
 private:
-    bool connect(const QString& name);
-    void createDataBase();
-    void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
+    QNetworkReply *m_reply;
+    Request *m_request;
+    QTime *m_time;
 
-    //Migration functions block
-    void migrateTo2();
-    //End migration functions block
-
-    QSqlDatabase m_database;
+    void releaseReplyResources();
+    void sendRawRequest(QNetworkAccessManager *manager,
+                        QNetworkRequest& request,
+                        const QUrlQuery& query);
+    void parseResponseHeaders();
 };
 
-#endif // REQUESTHISTORY_H
+#endif // RESTCLIENT_H
