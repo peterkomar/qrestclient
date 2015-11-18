@@ -200,8 +200,8 @@ void RestClientMainWindow::slotSendRequest()
     }
 
     QByteArray rawBody  = m_leftPanel->m_rawContent->toPlainText().toUtf8();
-    QString contentType = m_leftPanel->m_requestContentType->currentText();
-    m_request->setRaw(rawBody, contentType);
+    m_request->addRequestHeader("Content-Type", m_leftPanel->m_requestContentType->currentText());
+    m_request->setRaw(rawBody);
 
     m_restClient = new RestClient;
     connect(m_restClient, SIGNAL(finish()), this, SLOT(slotFinishRequest()));
@@ -217,7 +217,8 @@ void RestClientMainWindow::slotFinishRequest()
 {
     m_rightPanel->m_responseHeaders->setText(m_request->responseHeadersAsString());
     m_mainPanel->m_response->setText(m_request->response());
-    renderContentType(m_request->getContetnType());
+    m_mainPanel->m_errorResponse->setPlainText(m_request->statusMessage());
+    renderContentType(m_request->getResponseContentType());
     saveHistory();
 
     m_waitDialog->close();
@@ -283,9 +284,9 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item)
     m_toolBar->m_url->setText(m_request->url());
     m_toolBar->m_method->setCurrentText(m_request->method());
     m_mainPanel->m_response->setText(m_request->response());
-    m_mainPanel->m_errorResponse->setPlainText(m_request->error());
+    m_mainPanel->m_errorResponse->setPlainText(m_request->statusMessage());
     m_rightPanel->m_responseHeaders->setText(m_request->responseHeadersAsString());
-    renderContentType(m_request->getContetnType());
+    renderContentType(m_request->getResponseContentType());
 
     //load params
     loadPairs(m_request->requestParams(), m_leftPanel->m_params);
@@ -294,7 +295,7 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item)
 
     m_leftPanel->m_rawContent->setText(m_request->raw());
 
-    QString s = m_request->rawType();
+    QString s = m_request->getRequestContentType();
     if(m_leftPanel->m_requestContentType->findText(s) != -1) {
         m_leftPanel->m_requestContentType->setCurrentText(s);
     } else {
@@ -310,14 +311,14 @@ void RestClientMainWindow::slotRequestDetails()
     }
 
     QTreeWidgetItem *item = list.first();
-
-    RequestDetailsDlg *dlg = new RequestDetailsDlg(this);
     Request* request = m_history->getRequest(item->text(0).toInt());
-    dlg->setRequest(request->toString());
+
+    RequestDetailsDlg *dlg = new RequestDetailsDlg(request, this);
     dlg->setWindowTitle(tr("Details: %1").arg(item->text(2).toHtmlEscaped()));
     dlg->exec();
+    delete dlg;
+
     delete request;
-    delete dlg;    
 }
 
 void RestClientMainWindow::slotHistoryRemoveSelected()

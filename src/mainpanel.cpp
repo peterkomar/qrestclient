@@ -32,8 +32,8 @@ MainPanel::MainPanel(RestClientMainWindow* app)
     m_errorResponse = new QPlainTextEdit;
     m_errorResponse->setPlainText(QObject::tr("Error:"));
     m_errorResponse->setReadOnly(true);
-    m_errorResponse->setMinimumSize(500, 100);
-    m_errorResponse->setMaximumHeight(100);
+    m_errorResponse->setMinimumSize(500, 40);
+    m_errorResponse->setMaximumHeight(40);
 
     QWidget *main = new QWidget;
     QVBoxLayout *pvLayout = new QVBoxLayout(main);

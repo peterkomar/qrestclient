@@ -27,9 +27,16 @@ class Request
 {
 public:
     Request(const QString& url, const QString& method);
+
+    //Format functions
     QString toString();
-    QString getContetnType();
+    QString requestToHtml();
+    QString responseToHtml();
+
+    QString getResponseContentType();
     QString responseHeadersAsString();
+    QString getRequestContentType();
+    QString statusMessage();
 
     QString url() const { return m_url; }
     QString method() const { return m_method; }
@@ -38,15 +45,14 @@ public:
     QString response() const { return m_response; }
     void setResponse(const QString& response) { m_response = response; }
 
-    QString error() const { return m_error; }
-    void setError(const QString& error) { m_error = error; }
+    QString message() const { return m_message; }
+    void setMessage(const QString& message) { m_message = message; }
 
     int responseCode() { return i_responseCode; }
     void setResponseCode(int code) { i_responseCode = code; }
 
-    void setRaw(const QString& raw, const QString& type) { m_requestRaw = raw; m_requestRawType = type;}
+    void setRaw(const QString& raw) { m_requestRaw = raw; }
     QString raw() const { return m_requestRaw; }
-    QString rawType() const { return m_requestRawType; }
 
     void addRequestHeader(const QString& key, const QString& value);
     QHash<QString, QString> requestHeaders() const { return m_requestHeaders; }
@@ -64,16 +70,17 @@ private:
     QString m_url;
     QString m_method;
     QString m_response;
-    QString m_error;
+    QString m_message;
     QHash<QString, QString> m_requestHeaders;
     QHash<QString, QString> m_requestParams;
     QString m_requestRaw;
-    QString m_requestRawType;
     QHash<QString, QString> m_responseHeaders;
     int i_responseCode;
 
     //For support old versions
     QString m_responseHeadersString;
+
+    QString style();
 };
 
 #endif // REQUEST_H

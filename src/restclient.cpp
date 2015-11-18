@@ -91,10 +91,10 @@ void RestClient::sendRawRequest(QNetworkAccessManager *manager,
     QByteArray raw = m_request->raw().toUtf8();
     if( m_request->raw().isEmpty() ) {
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        m_request->addRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         raw = query.query(QUrl::FullyEncoded).toUtf8();
     } else {
         QByteArray postDataSize = QByteArray::number(raw.size());
-        request.setRawHeader("Content-Type", m_request->rawType().toLatin1());
         request.setRawHeader("Content-Length", postDataSize);
         m_request->addRequestHeader("Content-Length", postDataSize);
     }
@@ -121,7 +121,13 @@ void RestClient::slotFinishRequest()
 {
     parseResponseHeaders();
     m_reply->close();
-    m_request->setResponseCode(200);
+
+    QVariant statusCode = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    QVariant reason = m_reply->attribute( QNetworkRequest::HttpReasonPhraseAttribute );
+
+    m_request->setResponseCode(statusCode.toInt());
+    m_request->setMessage(reason.toString());
+
     releaseReplyResources();
     emit finish();
 }
@@ -150,8 +156,15 @@ void RestClient::slotReplyError(QNetworkReply::NetworkError error)
           break;
     }
 
-    m_request->setError(error_string);
-    m_request->setResponseCode(error);
+    QVariant statusCode = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    QVariant reason = m_reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute);
+
+    m_request->setMessage(reason.toString());
+    m_request->setResponseCode(statusCode.toInt());
+    QString res = m_request->response();
+    res += "\n\n" + error_string;
+    m_request->setResponse(res);
+
     parseResponseHeaders();
     releaseReplyResources();
     emit finish();

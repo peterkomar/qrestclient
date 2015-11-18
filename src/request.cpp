@@ -20,6 +20,7 @@
 #include "request.h"
 
 #include <QUrlQuery>
+#include <QDebug>
 
 Request::Request(const QString& url, const QString& method)
     :m_url(url)
@@ -41,7 +42,7 @@ QString Request::toString()
 
     if (!m_requestParams.isEmpty()) {
         QUrlQuery query;
-        QHashIterator<QString, QString> i(m_requestParams);
+        i = m_requestParams;
         while (i.hasNext()) {
             i.next();
             query.addQueryItem(i.key(), i.value());
@@ -53,11 +54,110 @@ QString Request::toString()
 
     res += "\n";
     QString raw = m_requestRaw.simplified();
-    if (raw.isEmpty()) {
+    if (!raw.isEmpty()) {
         res += raw + "\n";
     }
 
+    //Build response
+    QString response = "HTTP Response\n\n";
+    response += statusMessage() + "\n";
+    if (!m_responseHeaders.isEmpty()) {
+        i = m_responseHeaders;
+        while (i.hasNext()) {
+            i.next();
+            response += i.key() + ": " + i.value() +"\n";
+        }
+    }
+    response += "\n\n";
+    QString text = m_response.simplified();
+    if (!text.isEmpty()) {
+        response += text + "\n";
+    }
+
+    return res + "\n\n\n" + response;
+}
+
+QString Request::requestToHtml()
+{
+    QString res(style());
+    res += QString("<b>%1</b><br /><br />").arg("HTTP Request");
+    res += QString("<span class='method'>%1</span> %2<br />").arg(m_method).arg(m_url);
+    //Build headers
+    QHashIterator<QString, QString> i(m_requestHeaders);
+    while (i.hasNext()) {
+        i.next();
+        res += QString("<span class='tagHeader'>%1</span>: %2<br />").arg(i.key()).arg(i.value());
+    }
+
+
+
+    if (!m_requestParams.isEmpty()) {
+        res += "<br />";
+        QUrlQuery query;
+        i = m_requestParams;
+        while (i.hasNext()) {
+            i.next();
+            query.addQueryItem(i.key(), i.value());
+        }
+
+        res += QString("<span class='tagHeader'>%1</span>: %2<br />")
+                .arg(QObject::tr("Encoded Uri"))
+                .arg(query.query(QUrl::FullyEncoded));
+        res += QString("<span class='tagHeader'>%1</span>: %2<br />")
+                .arg(QObject::tr("Decoded Uri"))
+                .arg(query.query(QUrl::FullyDecoded));
+    }
+
+    QString raw = m_requestRaw.simplified();
+    if (!raw.isEmpty()) {
+        res += "<br />";
+        res += QString("<code>%1</code>").arg(raw);
+    }
     return res;
+}
+
+QString Request::style()
+{
+    return "<style >"
+            "  .tagHeader {"
+            "    color: #138fd5;"
+            "   }"
+            "   .method {"
+            "    color: #289f1b;"
+            "   }"
+           "   .status {"
+           "    color: #ff2200;"
+           "   }"
+            "</style>";
+}
+
+QString Request::responseToHtml()
+{
+    QString res(style());
+    res += QString("<b>%1</b><br /><br />").arg("HTTP Response");
+
+    res += QString("<span class='%1'>%2</span><br />")
+            .arg((i_responseCode == 200)? "method" : "status")
+            .arg(statusMessage());
+
+    QHashIterator<QString, QString> i(m_responseHeaders);
+    while (i.hasNext()) {
+        i.next();
+        res += QString("<span class='tagHeader'>%1</span>: %2<br />").arg(i.key()).arg(i.value());
+    }
+
+    QString text = m_response.simplified();
+    if (!text.isEmpty()) {
+        res += "<br />";
+        res += QString("<code>%1</code>").arg(text);
+    }
+
+    return res;
+}
+
+QString Request::statusMessage()
+{
+    return  QString("%1 %2").arg(i_responseCode).arg(m_message);
 }
 
 QString Request::responseHeadersAsString()
@@ -76,7 +176,15 @@ QString Request::responseHeadersAsString()
     }
 }
 
-QString Request::getContetnType()
+QString Request::getRequestContentType()
+{
+    if (m_requestHeaders.contains("Content-Type")) {
+        return m_requestHeaders["Content-Type"];
+    }
+    return QString("");
+}
+
+QString Request::getResponseContentType()
 {
     QString type = "text";
     //Support old version

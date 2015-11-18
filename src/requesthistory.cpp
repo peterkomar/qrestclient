@@ -159,7 +159,7 @@ void RequestHistory::addRequest(Request *request)
     query->bindValue(":type", request->method());
     query->bindValue(":url", request->url());
     query->bindValue(":response", request->response());
-    query->bindValue(":error", request->error());
+    query->bindValue(":error", request->message());
     query->exec();
 
     addRequestPairs(index, query, "requests_params", request->requestParams());
@@ -173,7 +173,7 @@ void RequestHistory::addRequest(Request *request)
     );
     query->bindValue(":request_id", index);
     query->bindValue(":body", request->raw());
-    query->bindValue(":type_content", request->rawType());
+    query->bindValue(":type_content", request->getRequestContentType());
     query->exec();
 
     result = m_database.commit();
@@ -277,7 +277,7 @@ Request* RequestHistory::getRequest(int requestId)
     Request *request = new Request(q.value(4).toString(), q.value(3).toString());
     request->setResponse(q.value(5).toString());
     request->setResponseCode(q.value(2).toInt());
-    request->setError(q.value(6).toString());
+    request->setMessage(q.value(6).toString());
 
     //Support old version
     request->setResponseHeadersString(q.value(7).toString());
@@ -318,7 +318,7 @@ Request* RequestHistory::getRequest(int requestId)
         throw "Error execute query";
     }
     if( q.first() ) {
-        request->setRaw(q.value(1).toString(), q.value(2).toString());
+        request->setRaw(q.value(1).toString());
     }
     return request;
 }

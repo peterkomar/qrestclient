@@ -22,14 +22,14 @@
 
 #include <QDialog>
 
-class QPlainTextEdit;
+class QTextEdit;
+class Request;
 
 class RequestDetailsDlg : public QDialog
 {
     Q_OBJECT
 public:
-    explicit RequestDetailsDlg(QWidget *parent = 0);
-    void setRequest(const QString& text);
+    explicit RequestDetailsDlg(Request* request, QWidget *parent = 0);
 
 signals:
 
@@ -37,7 +37,9 @@ public slots:
     void slotSendToBuffer();
 
 private:
-    QPlainTextEdit *m_view;
+    QTextEdit *m_viewRequest;
+    QTextEdit *m_viewResponse;
+    Request* m_request;
 };
 
 #endif // REQUESTDETAILSDLG_H
