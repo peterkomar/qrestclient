@@ -432,8 +432,8 @@ void RestClientMainWindow::renderContentType(const QString &contentType)
 
 void RestClientMainWindow::slotAbout()
 {
-    QMessageBox::about(this, "About", "<b>QRestClient</b> - REST client for WEB services developers.<br/>"
-                       "<br/> Supports sending GET, POST, PUT, DELETE requests to URL, managing sending params, heders, contets and logging sended requests.<br/><br/>"
+    QMessageBox::about(this, "About", "<b>QRestClient</b> - REST client.<br/>"
+                       "<br/> Supports sending GET, POST, PUT, DELETE requests to URL, managing sending params, heders, content and logging sent requests.<br/><br/>"
                        "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>"
                        "<br/><br/><b>License:</b> GPL v2"
                        "<br/> 2007 - " + QDateTime::currentDateTime().toString("yyyy") +
