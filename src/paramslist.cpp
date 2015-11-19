@@ -19,12 +19,13 @@
  ***************************************************************************/
 
 #include "paramslist.h"
-#include "editdlgimpl.h"
 
 #include <QPushButton>
+#include <QHeaderView>
 
-ParamsList::ParamsList(QWidget * parent) :
+ParamsList::ParamsList(ParamDlg::Mode mode, QWidget * parent) :
     QTreeWidget(parent)
+  ,i_Mode(mode)
 {
     QStringList params;
     params << "Name" << "Value";
@@ -55,7 +56,7 @@ void ParamsList::slotEditItem()
         }
     }
 
-    EditDlgImpl *dlg = new EditDlgImpl(this);
+    ParamDlg *dlg = new ParamDlg(i_Mode, this);
     dlg->setName(name);
     dlg->setValue(value);
 

@@ -22,20 +22,19 @@
 #define RESTCLIENTMAINWINDOW_H
 
 #include <QMainWindow>
-#include <QNetworkReply>
-#include <QTime>
 
-class QTextEdit;
 class RequestHistory;
-class QLineEdit;
-class QComboBox;
 class ParamsList;
-class RestHistoryWidget;
-class RequestHistory;
 class QTreeWidgetItem;
 class QMessageBox;
-class QTabWidget;
-class ResponseWidget;
+class Request;
+class ToolBar;
+class LeftPanel;
+class RightPanel;
+class BottomPabel;
+class Menu;
+class MainPanel;
+class RestClient;
 
 class RestClientMainWindow : public QMainWindow
 {
@@ -47,16 +46,18 @@ public:
 signals:
 
 public slots:
-     //Requests slots
-    void slotFinishRequest();
+    //Requests slots
     void slotSendRequest();
-    void slotReplyResponse();
-    void slotReplyError(QNetworkReply::NetworkError error);
+    void slotFinishRequest();
 
-    void slotHistoryLoad(QTreeWidgetItem*,int);
+    void slotHistoryLoad(QTreeWidgetItem*);
     void slotSelectedHistory();
     void slotHistoryRemoveSelected();
     void slotHistoryClear();
+    void slotFilterHistoryItems(const QString& );
+    void slotShowHistoryFilter();
+    void slotHideHistoryFilter();
+    void slotRequestDetails();
 
     void slotViewJson();
     void slotViewText();
@@ -67,60 +68,29 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent *event);
+    void keyPressEvent(QKeyEvent * event);
 
 
 private:
     QMessageBox *m_waitDialog;
 
-    ResponseWidget *m_response;
-    QTextEdit *m_errorResponse;
-    QLineEdit *m_editURL;
-    QComboBox *m_comboRestMethod;
-    ParamsList *m_params;
-    ParamsList *m_headers;
-    QComboBox *m_contetTypeCombo;
-    QTextEdit *m_contentBody;
-    QTextEdit *m_responseHeaders;
-    RestHistoryWidget *m_historyWidget;
-    QTabWidget *m_leftTabWidget;
-
+    ToolBar *m_toolBar;
+    LeftPanel *m_leftPanel;
+    RightPanel *m_rightPanel;
+    BottomPabel *m_bottomPanel;
+    Menu *m_menu;
+    MainPanel *m_mainPanel;
+    RestClient *m_restClient;
     RequestHistory *m_history;
-    QNetworkReply *m_reply;
+    Request *m_request;
 
-    QTime m_time;
-
-    QAction *m_jsonView;
-    QAction *m_textView;
-    QAction *m_csvView;
-
-
-    void loadHistory();
-    void saveHistory(int resposeCode);
-
-    void releaseReplyResources();
+    void loadHistory(const QString& query = "");
+    void loadPairs(const QHash<QString, QString>& pair, ParamsList* list);
+    void saveHistory();
     void waitDialog();
-
-    void _gui();
-    void setupToolBar();
-    void setupLeftPanel();
-    void setupRightPanel();
-    void setupBottomPabel();
-    void setupMenu();
-    void sendRawRequest(bool isPost,
-                        QNetworkAccessManager *manager,
-                        QNetworkRequest& request,
-                        const QUrlQuery& query,
-                        const QByteArray& rawBody,
-                        const QString& contentType);
-
-    QWidget* buildParamsWidget(ParamsList *);
-
     void clearItems(QList<QTreeWidgetItem*>& items);
     void parseUrlParams();
-
     void renderContentType(const QString& contentType);
-
-    void renderResponseHeaders();
     void setTitle(const QString& method, const QString& url);
 };
 

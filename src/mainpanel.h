@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by peter komar                                     *
+ *   Copyright (C) 2015 by peter komar                                     *
  *   udldevel@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,47 +17,19 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef REQUESTHISTORY_H
-#define REQUESTHISTORY_H
+#ifndef MAINPANEL_H
+#define MAINPANEL_H
 
-#include <QSqlError>
-#include <QSqlRecord>
-#include <QDebug>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QCryptographicHash>
-#include <QSettings>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QCoreApplication>
-#include <QVector>
+class RestClientMainWindow;
+class ResponseWidget;
+class QPlainTextEdit;
 
-class Request;
-
-class RequestHistory
+class MainPanel
 {
 public:
-    RequestHistory();
-    ~RequestHistory();
-    void init();
-
-    void addRequest(Request *request);
-    void setGistId(int requestid, const QString& gistId);
-    bool deleteHistory(const QVector<int> requestIds);
-    QSqlQuery* getHistory(const QString& filter);
-    Request* getRequest(int requestId);
-
-private:
-    bool connect(const QString& name);
-    void createDataBase();
-    void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
-
-    //Migration functions block
-    void migrateTo2();
-    //End migration functions block
-
-    QSqlDatabase m_database;
+    MainPanel(RestClientMainWindow* app);
+    ResponseWidget *m_response;
+    QPlainTextEdit *m_errorResponse;
 };
 
-#endif // REQUESTHISTORY_H
+#endif // MAINPANEL_H

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by peter komar                                     *
+ *   Copyright (C) 2015 by peter komar                                     *
  *   udldevel@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,47 +17,29 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef REQUESTHISTORY_H
-#define REQUESTHISTORY_H
+#ifndef LEFTPANEL_H
+#define LEFTPANEL_H
 
-#include <QSqlError>
-#include <QSqlRecord>
-#include <QDebug>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QCryptographicHash>
-#include <QSettings>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QCoreApplication>
-#include <QVector>
+#include "paramslist.h"
 
-class Request;
+class RestClientMainWindow;
+class QComboBox;
+class QTextEdit;
+class QTabWidget;
 
-class RequestHistory
+class LeftPanel
 {
 public:
-    RequestHistory();
-    ~RequestHistory();
-    void init();
+    LeftPanel(RestClientMainWindow* app);
 
-    void addRequest(Request *request);
-    void setGistId(int requestid, const QString& gistId);
-    bool deleteHistory(const QVector<int> requestIds);
-    QSqlQuery* getHistory(const QString& filter);
-    Request* getRequest(int requestId);
+    ParamsList *m_params;
+    ParamsList *m_headers;
+    QComboBox  *m_requestContentType;
+    QTextEdit  *m_rawContent;
+    QTabWidget *m_tab;
 
 private:
-    bool connect(const QString& name);
-    void createDataBase();
-    void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
-
-    //Migration functions block
-    void migrateTo2();
-    //End migration functions block
-
-    QSqlDatabase m_database;
+    QWidget* buildParamsWidget(ParamsList *);
 };
 
-#endif // REQUESTHISTORY_H
+#endif // LEFTPANEL_H

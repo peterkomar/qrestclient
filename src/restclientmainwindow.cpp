@@ -21,35 +21,46 @@
 #include "restclientmainwindow.h"
 #include "paramslist.h"
 #include "resthistorywidget.h"
+#include "request.h"
 #include "requesthistory.h"
 #include "responsewidget.h"
+#include "requestdetailsdlg.h"
+#include "toolbar.h"
+#include "leftpanel.h"
+#include "rightpanel.h"
+#include "bottompabel.h"
+#include "menu.h"
+#include "mainpanel.h"
+#include "restclient.h"
 
-#include <QTextEdit>
-#include <QVBoxLayout>
-#include <QLineEdit>
-#include <QLabel>
-#include <QComboBox>
-#include <QToolBar>
-#include <QTabWidget>
-#include <QPushButton>
-#include <QDockWidget>
 #include <QMessageBox>
-#include <QUrlQuery>
 #include <QApplication>
 #include <QStatusBar>
-#include <QMenuBar>
 #include <QSettings>
 #include <QCloseEvent>
-#include <QShortcut>
+#include <QLineEdit>
+#include <QUrlQuery>
+#include <QComboBox>
+#include <QTextEdit>
+#include <QPlainTextEdit>
+#include <QAction>
 
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
-    setMinimumSize(1000, 600);
-    _gui();
+    m_request    = 0;
+    m_waitDialog = 0;
+    m_restClient = 0;
 
-    m_reply = 0;
-    m_waitDialog =0;
+    setMinimumSize(1000, 600);
+    setWindowTitle("QRestClient");
+
+    m_mainPanel   = new MainPanel(this);
+    m_toolBar     = new ToolBar(this);
+    m_leftPanel   = new LeftPanel(this);
+    m_rightPanel  = new RightPanel(this);
+    m_bottomPanel = new BottomPabel(this);
+    m_menu        = new Menu(this);
 
     m_history = new RequestHistory();
     m_history->init();
@@ -61,315 +72,39 @@ RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
         restoreState(arr);
     }
     int tab = setting.value("gui/tab_index").toInt();
-    m_leftTabWidget->setCurrentIndex(tab);
+    m_leftPanel->m_tab->setCurrentIndex(tab);
 }
 
 RestClientMainWindow::~RestClientMainWindow()
 {
     delete m_history;
+    delete m_toolBar;
+    delete m_leftPanel;
+    delete m_rightPanel;
+    delete m_bottomPanel;
+    delete m_menu;
 }
 
 void RestClientMainWindow::closeEvent(QCloseEvent *event)
 {
     QSettings setting("UDL", "qrestclient");
     setting.setValue("gui/state", saveState());
-    setting.setValue("gui/tab_index", m_leftTabWidget->currentIndex());
+    setting.setValue("gui/tab_index", m_leftPanel->m_tab->currentIndex());
 
     event->accept();
 }
 
-void RestClientMainWindow::_gui()
+void RestClientMainWindow::keyPressEvent(QKeyEvent * event)
 {
-     setWindowTitle("QRestClient");
-
-     QVBoxLayout *l = new QVBoxLayout;
-
-     m_response = new ResponseWidget(this);
-     m_response->setMinimumSize(500, 205);
-     l->addWidget(m_response);
-
-     m_errorResponse = new QTextEdit();
-     m_errorResponse->setText("Error:");
-     m_errorResponse->setReadOnly(true);
-     m_errorResponse->setAcceptRichText(false);
-     m_errorResponse->setMinimumSize(500, 100);
-     m_errorResponse->setMaximumHeight(100);
-     l->addWidget(m_errorResponse);
-
-     QWidget *main = new QWidget(this);
-     main->setLayout(l);
-     setCentralWidget(main);
-
-     setupToolBar();
-     setupLeftPanel();
-     setupRightPanel();
-     setupBottomPabel();
-     setupMenu();
-}
-
-void RestClientMainWindow::setupMenu()
-{
-    QMenu *view = menuBar()->addMenu("View");
-
-    m_jsonView = new QAction("Json", this);
-    m_textView = new QAction("Text", this);
-    m_csvView  = new QAction("CSV", this);
-
-    QActionGroup *viewGroup = new QActionGroup(this);
-    viewGroup->addAction(m_jsonView);
-    viewGroup->addAction(m_textView);
-    viewGroup->addAction(m_csvView);
-
-    m_jsonView->setCheckable(true);
-    m_textView->setCheckable(true);
-    m_csvView->setCheckable(true);
-
-    m_textView->setChecked(true);
-
-    view->addAction(m_jsonView);
-    view->addAction(m_textView);
-    view->addAction(m_csvView);
-
-    connect(m_jsonView, SIGNAL(triggered()), this, SLOT(slotViewJson()));
-    connect(m_textView, SIGNAL(triggered()), this, SLOT(slotViewText()));
-    connect(m_csvView,  SIGNAL(triggered()), this, SLOT(slotViewCsv()));
-
-    QAction *a = new QAction("About", this);
-    QMenu *m = menuBar()->addMenu("Help");
-    m->addAction(a);
-    connect(a, SIGNAL(triggered()), this, SLOT(slotAbout()));
-}
-
-void RestClientMainWindow::setupToolBar()
-{
-    QWidget *tool = new QWidget();
-    QHBoxLayout *l = new QHBoxLayout;
-
-    QLabel *lUrl = new QLabel("URL:");
-    m_editURL = new QLineEdit("http://");
-    QLabel *lR = new QLabel("Method:");
-    m_comboRestMethod = new QComboBox();
-
-    QStringList items;
-    items << "GET" << "POST" << "PUT" << "DELETE";
-    m_comboRestMethod->addItems(items);
-
-    QPushButton *m_btn = new QPushButton("Send");
-    m_btn->setToolTip(tr("To run request Ctrl+R"));
-    m_btn->setDefault(true);
-    QShortcut *shortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_R), this);
-
-
-    connect(m_btn, SIGNAL(clicked()), this, SLOT(slotSendRequest()));
-    connect(m_editURL, SIGNAL(returnPressed()), this, SLOT(slotSendRequest()));
-    connect(shortcut, SIGNAL(activated()), this, SLOT(slotSendRequest()));
-
-
-    l->addWidget(lUrl);
-    l->addWidget(m_editURL);
-    l->addWidget(lR);
-    l->addWidget(m_comboRestMethod);
-    l->addWidget(m_btn);
-    tool->setLayout(l);
-
-    QToolBar *toolBar = new QToolBar("restbar", this);
-    toolBar->setObjectName("RestToolBar");
-    toolBar->addWidget(tool);
-
-    addToolBar(toolBar);
-}
-
-void RestClientMainWindow::setupLeftPanel()
-{
-    m_params = new ParamsList;
-    m_headers = new ParamsList;
-    m_contetTypeCombo= new QComboBox();
-    m_contentBody = new QTextEdit;
-    m_contentBody->setAcceptRichText(false);
-
-    QStringList types;
-    types << "application/json" << "text/csv" << "text/plain" << "text/xml";
-    m_contetTypeCombo->addItems(types);
-    m_contetTypeCombo->setEditable(true);
-
-    QWidget *w = new QWidget;
-    QHBoxLayout *ph = new QHBoxLayout;
-    QLabel *label = new QLabel("Content Type:");
-    ph->addWidget(label);
-    ph->addWidget(m_contetTypeCombo);
-    QVBoxLayout *pv = new QVBoxLayout;
-    pv->addLayout(ph);
-    pv->addWidget(m_contentBody);
-    w->setLayout(pv);
-
-    m_leftTabWidget = new QTabWidget();
-    m_leftTabWidget->addTab(buildParamsWidget(m_params), "Params");
-    m_leftTabWidget->addTab(buildParamsWidget(m_headers), "Headers");
-    m_leftTabWidget->addTab(w, "Content to Send");
-
-    m_leftTabWidget->setCurrentIndex(0);
-
-    QDockWidget *dock = new QDockWidget(this);
-    dock->setObjectName("Left");
-    dock->setWidget(m_leftTabWidget);
-    dock->setFeatures(QDockWidget::DockWidgetMovable
-                      | QDockWidget::DockWidgetFloatable
-                      | QDockWidget::DockWidgetVerticalTitleBar);
-    dock->setMinimumWidth(450);
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
-}
-
-void RestClientMainWindow::setupRightPanel()
-{
-    m_responseHeaders = new QTextEdit;
-    m_responseHeaders->setAcceptRichText(false);
-    m_responseHeaders->setReadOnly(true);
-
-    QDockWidget *dock = new QDockWidget(this);
-    dock->setObjectName("Right");
-    dock->setWindowTitle("Response Headers");
-    dock->setWidget(m_responseHeaders);
-    dock->setFeatures(QDockWidget::DockWidgetMovable
-                      | QDockWidget::DockWidgetFloatable);
-    addDockWidget(Qt::LeftDockWidgetArea, dock);
-}
-
-void RestClientMainWindow::setupBottomPabel()
-{
-    m_historyWidget = new RestHistoryWidget;
-    connect(m_historyWidget, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(slotHistoryLoad(QTreeWidgetItem*,int)));
-    connect(m_historyWidget, SIGNAL(itemSelectionChanged()), this, SLOT(slotSelectedHistory()));
-    connect(m_historyWidget, SIGNAL(emitRemoveItems()), this, SLOT(slotHistoryRemoveSelected()));
-    connect(m_historyWidget, SIGNAL(emitRemoveAllItems()), this, SLOT(slotHistoryClear()));
-
-    QDockWidget *dock = new QDockWidget(this);
-    dock->setObjectName("Bottom");
-    dock->setWindowTitle("Request History");
-    dock->setWidget(m_historyWidget);
-    dock->setFeatures(QDockWidget::DockWidgetMovable
-                      | QDockWidget::DockWidgetFloatable);
-    addDockWidget(Qt::BottomDockWidgetArea, dock);
-}
-
-QWidget* RestClientMainWindow::buildParamsWidget(ParamsList *widget)
-{
-    QWidget *w = new QWidget;
-    QHBoxLayout *ph = new QHBoxLayout;
-
-    QPushButton *btnAdd = new QPushButton("Add");
-    btnAdd->setProperty("add", true);
-    connect(btnAdd, SIGNAL(clicked()), widget, SLOT(slotEditItem()));
-    QPushButton *btnEdit = new QPushButton("Edit");
-    connect(btnEdit, SIGNAL(clicked()), widget, SLOT(slotEditItem()));
-    QPushButton *btnDelete = new QPushButton("Delete");
-    connect(btnDelete, SIGNAL(clicked()), widget, SLOT(slotDeleteItem()));
-
-    ph->addStretch(10);
-    ph->addWidget(btnAdd);
-    ph->addWidget(btnEdit);
-    ph->addWidget(btnDelete);
-
-    QVBoxLayout *pv = new QVBoxLayout;
-    pv->addLayout(ph);
-    pv->addWidget(widget);
-    w->setLayout(pv);
-
-    return w;
-}
-
-void RestClientMainWindow::saveHistory(int code)
-{
-    QString url = m_editURL->text();
-    if( url.isEmpty() || url.left(4) != "http" ) {
-        QMessageBox::critical(this, "Error", "URL is incorrect");
-        return;
-    }
-
-    int requestId = m_history->addRequest(url,
-                                          m_comboRestMethod->currentText(),
-                                          code,
-                                          m_response->toText(),
-                                          m_errorResponse->toPlainText(),
-                                          m_responseHeaders->toHtml());
-
-    QTreeWidgetItemIterator it(m_params);
-    while (*it) {
-        m_history->addParam(requestId, (*it)->text(0), (*it)->text(1));
-        ++it;
-    }
-
-    QTreeWidgetItemIterator it2(m_headers);
-    while (*it2) {
-        m_history->addHeader(requestId, (*it2)->text(0), (*it2)->text(1));
-        ++it2;
-    }
-
-    m_history->addRaw(requestId, m_contetTypeCombo->currentText(), m_contentBody->toPlainText());
-    loadHistory();
-}
-
-void RestClientMainWindow::loadHistory()
-{
-    QSqlQuery q(m_history->database());
-    q.prepare("SELECT * FROM requests ORDER By id DESC");
-    if( !q.exec() ) {
-        throw "Error execute query";
-    }
-
-    m_historyWidget->clear();
-    while (q.next()) {
-        QTreeWidgetItem *item  = new QTreeWidgetItem(m_historyWidget);
-        item->setText(0, q.value(0).toString());
-        item->setText(1, q.value(3).toString());
-        item->setText(2, q.value(4).toString());
-        item->setText(3, q.value(2).toString());
-        item->setText(4, q.value(1).toString());
-    }
-}
-
-void RestClientMainWindow::waitDialog()
-{
-    m_waitDialog = new QMessageBox(this);
-    m_waitDialog->setStandardButtons(QMessageBox::Abort);
-    m_waitDialog->setText("Please wait, sending request ...");
-    int btn = m_waitDialog->exec();
-    if (btn == QMessageBox::Abort && m_reply) {
-        m_reply->abort();
-    }
-}
-
-void RestClientMainWindow::releaseReplyResources()
-{
-    disconnect(m_reply, SIGNAL(readyRead()), this, SLOT(slotReplyResponse()));
-    disconnect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)), this,SLOT(slotReplyError(QNetworkReply::NetworkError)));
-    disconnect(m_reply, SIGNAL(finished()), this, SLOT(slotFinishRequest()));
-
-    QNetworkAccessManager *m = m_reply->manager();
-    m_reply->deleteLater();
-    m->deleteLater();
-
-    m_waitDialog->close();
-    delete m_waitDialog;
-    m_waitDialog = 0;
-}
-
-void RestClientMainWindow::clearItems(QList<QTreeWidgetItem *>& items)
-{
-    QVector<int> ids;
-    for (int i = 0; i < items.size(); ++i) {
-        ids << ((QTreeWidgetItem *)items.at(i))->text(0).toInt();
-    }
-
-    if (m_history->deleteHistory(ids)) {
-        qDeleteAll(items);
-    } else {
-        QMessageBox::critical(this, tr("Error delete"), tr("Can't delete item(s) beacuses database"));
+    if (event->key() == Qt::Key_Escape) {
+        slotHideHistoryFilter();
+        event->accept();
     }
 }
 
 void RestClientMainWindow::parseUrlParams()
 {
-    QString url = m_editURL->text();
+    QString url = m_toolBar->m_url->text();
     int pos = url.indexOf("?");
     if( pos == -1 ) {
         return;
@@ -377,16 +112,16 @@ void RestClientMainWindow::parseUrlParams()
 
     QString queryString = url.mid(pos+1);
     url.remove("?"+queryString);
-    m_editURL->setText(url);
+    m_toolBar->m_url->setText(url);
 
    QUrlQuery query(queryString);
 
    QList<QPair<QString, QString> > items = query.queryItems();
    for( int i= 0; i < items.size(); i++ ) {
        QPair<QString, QString> pair = items.at(i);
-       QList<QTreeWidgetItem *> params = m_params->findItems(pair.first, Qt::MatchFixedString, 0);
+       QList<QTreeWidgetItem *> params = m_leftPanel->m_params->findItems(pair.first, Qt::MatchFixedString, 0);
        if( params.isEmpty() ) {
-           QTreeWidgetItem *item = new QTreeWidgetItem(m_params);
+           QTreeWidgetItem *item = new QTreeWidgetItem(m_leftPanel->m_params);
            item->setText(0, pair.first);
            item->setText(1, pair.second);
        } else {
@@ -407,11 +142,22 @@ void RestClientMainWindow::setTitle(const QString& method, const QString& url)
     setWindowTitle(title + QString(" - [%1] %2").arg(method).arg(url));
 }
 
+void RestClientMainWindow::waitDialog()
+{
+    m_waitDialog = new QMessageBox(this);
+    m_waitDialog->setStandardButtons(QMessageBox::Abort);
+    m_waitDialog->setText(tr("Please wait, sending request ..."));
+    int btn = m_waitDialog->exec();
+    if (btn == QMessageBox::Abort && m_restClient) {
+        m_restClient->abort();
+    }
+}
+
 //slots
 void RestClientMainWindow::slotSendRequest()
 {
     parseUrlParams();
-    QString url = m_editURL->text();
+    QString url = m_toolBar->m_url->text().trimmed();
     if( url.isEmpty()
             || url.left(4) != "http"
             || url == "http://"
@@ -420,237 +166,167 @@ void RestClientMainWindow::slotSendRequest()
         return;
     }
 
-    setTitle(m_comboRestMethod->currentText(), url);
+    setTitle(m_toolBar->m_method->currentText(), url);
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    if (m_request) {
+        delete m_request;
+        m_request = 0;
+    }
+    m_request = new Request(url, m_toolBar->m_method->currentText());
 
-    QUrl urlObject(url);
-    QUrlQuery query;
-    QTreeWidgetItemIterator paramsIterator(m_params);
+    QTreeWidgetItemIterator paramsIterator(m_leftPanel->m_params);
     while (*paramsIterator) {
-        query.addQueryItem((*paramsIterator)->text(0), (*paramsIterator)->text(1));
+        m_request->addRequestParam((*paramsIterator)->text(0), (*paramsIterator)->text(1));
         ++paramsIterator;
     }
-    urlObject.setQuery(query);
 
-    QNetworkRequest request(urlObject);
-
-    //Ignore SSL errors
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
-
-    QTreeWidgetItemIterator headerIterator(m_headers);
+    QTreeWidgetItemIterator headerIterator(m_leftPanel->m_headers);
     while (*headerIterator) {
-        request.setRawHeader((*headerIterator)->text(0).toUtf8(), (*headerIterator)->text(1).toUtf8());
+        m_request->addRequestHeader((*headerIterator)->text(0).toUtf8(), (*headerIterator)->text(1).toUtf8());
         ++headerIterator;
     }
 
-    QByteArray rawBody  = m_contentBody->toPlainText().toUtf8();
-    QString contentType = m_contetTypeCombo->currentText();
+    QByteArray rawBody  = m_leftPanel->m_rawContent->toPlainText().toUtf8();
+    m_request->addRequestHeader("Content-Type", m_leftPanel->m_requestContentType->currentText());
+    m_request->setRaw(rawBody);
 
-    if( m_comboRestMethod->currentText() == "GET" ) {
-        m_reply = manager->get(request);
-    } else if( m_comboRestMethod->currentText() == "POST" ) {
-        sendRawRequest(true, manager, request, query, rawBody, contentType);
-    } else if( m_comboRestMethod->currentText() == "PUT" ) {
-        sendRawRequest(false, manager, request, query, rawBody, contentType);
-    } else if( m_comboRestMethod->currentText() == "DELETE" ) {
-        m_reply = manager->deleteResource(request);
-    } else {
-        QMessageBox::critical(this, "Error", "Unsupported method");
-        return;
-    }
+    m_restClient = new RestClient;
+    connect(m_restClient, SIGNAL(finish()), this, SLOT(slotFinishRequest()));
 
-    m_time = QTime::currentTime();
+    m_restClient->sendRequest(m_request);
 
-    connect(m_reply, SIGNAL(readyRead()), this, SLOT(slotReplyResponse()));
-    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)), this,SLOT(slotReplyError(QNetworkReply::NetworkError)));
-    connect(m_reply, SIGNAL(finished()), this, SLOT(slotFinishRequest()));
-
-    m_response->clear();
-    m_errorResponse->clear();
+    m_mainPanel->m_response->clear();
+    m_mainPanel->m_errorResponse->clear();
     waitDialog();
-}
-
-void RestClientMainWindow::sendRawRequest(bool isPost,
-                                          QNetworkAccessManager *manager,
-                                          QNetworkRequest& request,
-                                          const QUrlQuery& query,
-                                          const QByteArray& rawBody,
-                                          const QString& contentType)
-{
-    QByteArray raw = rawBody;
-    if( rawBody.isEmpty() ) {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-        raw = query.query(QUrl::FullyEncoded).toUtf8();
-    } else {
-        QByteArray postDataSize = QByteArray::number(raw.size());
-        request.setRawHeader("Content-Type", contentType.toLatin1());
-        request.setRawHeader("Content-Length", postDataSize);
-    }
-
-    if (isPost) {
-        m_reply = manager->post(request, raw);
-    } else {
-        m_reply = manager->put(request, raw);
-    }
-}
-
-void RestClientMainWindow::renderResponseHeaders()
-{
-    QTime time = QTime::currentTime();
-    QList<QByteArray> headers = m_reply->rawHeaderList();
-
-    QString contetType;
-    m_responseHeaders->clear();
-    for (int i = 0; i < headers.size(); ++i) {
-
-        if( headers.at(i).toLower() == "content-type") {
-            contetType = m_reply->rawHeader(headers.at(i));
-        }
-
-        m_responseHeaders->append("<b>"+headers.at(i) + ":</b> " + m_reply->rawHeader(headers.at(i)));
-    }
-
-    m_responseHeaders->append("<b>Execution Time:</b> "+QString::number(m_time.msecsTo(time))+" ms");
-    renderContentType(contetType);
 }
 
 void RestClientMainWindow::slotFinishRequest()
 {
-    renderResponseHeaders();
-    m_reply->close();
-    saveHistory(200);
-    releaseReplyResources();
+    m_rightPanel->m_responseHeaders->setText(m_request->responseHeadersAsString());
+    m_mainPanel->m_response->setText(m_request->response());
+    m_mainPanel->m_errorResponse->setPlainText(m_request->statusMessage());
+    renderContentType(m_request->getResponseContentType());
+    saveHistory();
+
+    m_waitDialog->close();
+    delete m_waitDialog;
+    m_waitDialog = 0;
+    delete m_request;
+    m_request = 0;
+    m_restClient->deleteLater();
 }
 
-void RestClientMainWindow::slotReplyResponse()
+void RestClientMainWindow::saveHistory()
 {
-    m_response->append(m_reply->readAll());
+    m_history->addRequest(m_request);
+    m_bottomPanel->m_filterEdit->clear();
+    loadHistory();
 }
 
-void RestClientMainWindow::slotReplyError(QNetworkReply::NetworkError error)
+void RestClientMainWindow::loadHistory(const QString& filter)
 {
-    renderResponseHeaders();
-
-    QString error_string;
-    switch( error) {
-      case QNetworkReply::ConnectionRefusedError :
-          error_string += tr("the remote server refused the connection (the server is not accepting requests)");
-          break;
-
-       case QNetworkReply::HostNotFoundError :
-          error_string += tr("the remote host name was not found (invalid hostname)");
-          break;
-
-      default :
-          error_string +=  m_reply->errorString();
-          break;
+    QSqlQuery *q = m_history->getHistory(filter);
+    m_bottomPanel->m_historyWidget->clear();
+    while (q->next()) {
+        QTreeWidgetItem *item  = new QTreeWidgetItem(m_bottomPanel->m_historyWidget);
+        item->setText(0, q->value(0).toString());
+        item->setText(1, q->value(3).toString());
+        item->setText(2, q->value(4).toString());
+        item->setText(3, q->value(2).toString());
+        item->setText(4, q->value(1).toString());
     }
-
-    m_errorResponse->setText(error_string);
-    releaseReplyResources();
-
-    saveHistory(error);
+    delete q;
 }
 
 void RestClientMainWindow::slotSelectedHistory()
 {
-    QList<QTreeWidgetItem*> list = m_historyWidget->selectedItems();
+    QList<QTreeWidgetItem*> list = m_bottomPanel->m_historyWidget->selectedItems();
     if (!list.isEmpty()) {
        QTreeWidgetItem *item = list.takeFirst();
-       slotHistoryLoad(item, 0);
+       slotHistoryLoad(item);
     }
 }
 
-
-void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item, int)
+void RestClientMainWindow::loadPairs(const QHash<QString, QString>& pair, ParamsList* list)
 {
-    QSqlQuery q(m_history->database());
-    q.prepare("SELECT * FROM requests WHERE id = :id");
-    q.bindValue(":id", item->text(0));
-    if( !q.exec() ) {
-        throw "Error execute query";
-    }
-
-    if( !q.first() ) {
-        return;
-    }
-
-    QString headers = q.value(7).toString();
-    QString type = "text";
-    int pos = 0;
-
-    if((pos = headers.indexOf("content-type:", 0, Qt::CaseInsensitive)) != -1) {
-        int end = headers.indexOf("\n", pos+1);
-        type = headers.mid(pos, end-pos).trimmed();
-    }
-
-    m_editURL->setText(q.value(4).toString());
-    m_comboRestMethod->setCurrentText(q.value(3).toString());
-    m_response->setText(q.value(5).toString());
-    m_errorResponse->setText(q.value(6).toString());
-    m_responseHeaders->setText(q.value(7).toString());
-
-    renderContentType(type);
-
     QTreeWidgetItem *i = 0;
-    //load params
-    q.prepare("SELECT * FROM requests_params WHERE request_id = :id");
-    q.bindValue(":id", item->text(0));
-    if( !q.exec() ) {
-        throw "Error execute query";
+    list->clear();
+    QHashIterator<QString, QString> iterator(pair);
+    while (iterator.hasNext()) {
+        iterator.next();
+        i  = new QTreeWidgetItem(list);
+        i->setText(0, iterator.key());
+        i->setText(1, iterator.value());
     }
-    m_params->clear();
-    while (q.next()) {
-        i  = new QTreeWidgetItem(m_params);
-        i->setText(0, q.value(1).toString());
-        i->setText(1, q.value(2).toString());
-    }
-
-    //load headers
-    q.prepare("SELECT * FROM request_headers WHERE request_id = :id");
-    q.bindValue(":id", item->text(0));
-    if( !q.exec() ) {
-        throw "Error execute query";
-    }
-    m_headers->clear();
-    while (q.next()) {
-        i  = new QTreeWidgetItem(m_headers);
-        i->setText(0, q.value(1).toString());
-        i->setText(1, q.value(2).toString());
-    }
-
-    q.prepare("SELECT * FROM request_raw WHERE request_id = :id");
-    q.bindValue(":id", item->text(0));
-    if( !q.exec() ) {
-        throw "Error execute query";
-    }
-
-    m_contentBody->clear();
-    if( !q.first() ) {
-        return;
-    }
-
-    QString s = q.value(2).toString();
-    if(m_contetTypeCombo->findText(s) != -1) {
-        m_contetTypeCombo->setCurrentText(s);
-    } else {
-        m_contetTypeCombo->addItem(s);
-    }
-
-    m_contentBody->setText(q.value(1).toString());
 }
 
-void RestClientMainWindow::slotHistoryRemoveSelected()
+void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item)
 {
-    QList<QTreeWidgetItem *> list = m_historyWidget->selectedItems();
+    try {
+      m_request = m_history->getRequest(item->text(0).toInt());
+    } catch(bool ) {
+        return;//Not found
+    }
+
+    m_toolBar->m_url->setText(m_request->url());
+    m_toolBar->m_method->setCurrentText(m_request->method());
+    m_mainPanel->m_response->setText(m_request->response());
+    m_mainPanel->m_errorResponse->setPlainText(m_request->statusMessage());
+    m_rightPanel->m_responseHeaders->setText(m_request->responseHeadersAsString());
+    renderContentType(m_request->getResponseContentType());
+
+    //load params
+    loadPairs(m_request->requestParams(), m_leftPanel->m_params);
+    //Load headers
+    loadPairs(m_request->requestHeaders(), m_leftPanel->m_headers);
+
+    m_leftPanel->m_rawContent->setText(m_request->raw());
+
+    QString s = m_request->getRequestContentType();
+    if(m_leftPanel->m_requestContentType->findText(s) != -1) {
+        m_leftPanel->m_requestContentType->setCurrentText(s);
+    } else {
+        m_leftPanel->m_requestContentType->addItem(s);
+    }
+
+    delete m_request;
+    m_request = 0;
+}
+
+void RestClientMainWindow::slotRequestDetails()
+{
+    QList<QTreeWidgetItem *> list = m_bottomPanel->m_historyWidget->selectedItems();
     if( list.isEmpty() ) {
         return;
     }
 
-    int res = QMessageBox::question(this, "Confirm Remove", "Are you shure to want to remove selected requests?");
+    QTreeWidgetItem *item = list.first();
+    Request* request = m_history->getRequest(item->text(0).toInt());
+    QString gist = request->getGistId();
+
+    RequestDetailsDlg *dlg = new RequestDetailsDlg(request, this);
+    dlg->setWindowTitle(tr("Details: %1").arg(item->text(2).toHtmlEscaped()));
+    dlg->exec();
+    delete dlg;
+
+    /**
+    * Save Gist id if it first time
+    */
+    if (gist.isEmpty() && !request->getGistId().isEmpty()) {
+        m_history->setGistId(item->text(0).toInt(), request->getGistId());
+    }
+
+    delete request;
+}
+
+void RestClientMainWindow::slotHistoryRemoveSelected()
+{
+    QList<QTreeWidgetItem *> list = m_bottomPanel->m_historyWidget->selectedItems();
+    if( list.isEmpty() ) {
+        return;
+    }
+
+    int res = QMessageBox::question(this, tr("Confirm Remove"), tr("Are you shure to want to remove selected requests?"));
     if( res == QMessageBox::Yes ) {
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         clearItems(list);
@@ -658,31 +334,60 @@ void RestClientMainWindow::slotHistoryRemoveSelected()
     }
 }
 
+void RestClientMainWindow::clearItems(QList<QTreeWidgetItem *>& items)
+{
+    QVector<int> ids;
+    for (int i = 0; i < items.size(); ++i) {
+        ids << ((QTreeWidgetItem *)items.at(i))->text(0).toInt();
+    }
+
+    if (m_history->deleteHistory(ids)) {
+        qDeleteAll(items);
+    } else {
+        QMessageBox::critical(this, tr("Error delete"), tr("Can't delete item(s) beacuses database"));
+    }
+}
+
 void RestClientMainWindow::slotHistoryClear()
 {
-    int res = QMessageBox::question(this, "Confirm Remove", "Are you shure to want to clear request history?");
+    int res = QMessageBox::question(this, tr("Confirm Remove"), tr("Are you shure to want to clear request history?"));
     if( res != QMessageBox::Yes ) {
         return;
     }
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
-    int countItems = m_historyWidget->topLevelItemCount();
+    int countItems = m_bottomPanel->m_historyWidget->topLevelItemCount();
     QList<QTreeWidgetItem *> list;
     for( int i=0; i < countItems; i++ ) {
-        list.append(m_historyWidget->topLevelItem(i));
+        list.append(m_bottomPanel->m_historyWidget->topLevelItem(i));
     }
-
     clearItems(list);
-
     loadHistory();
+    m_bottomPanel->m_filterEdit->clear();
 
     QApplication::restoreOverrideCursor();
 }
 
+void RestClientMainWindow::slotFilterHistoryItems(const QString& text)
+{
+    loadHistory(text);
+}
+
+void RestClientMainWindow::slotShowHistoryFilter()
+{
+    m_bottomPanel->m_filterEdit->setVisible(true);
+    m_bottomPanel->m_filterEdit->setFocus();
+}
+
+void RestClientMainWindow::slotHideHistoryFilter()
+{
+    m_bottomPanel->m_filterEdit->setVisible(false);
+}
+
 void RestClientMainWindow::slotViewJson()
 {
-    ResponseWidget::type type = m_response->render(ResponseWidget::TYPE_JSON);
+    ResponseWidget::type type = m_mainPanel->m_response->render(ResponseWidget::TYPE_JSON);
 
     if( type != ResponseWidget::TYPE_JSON ) {
         QMessageBox::critical(this, tr("Error parese"), tr("Error parsing JSON"));
@@ -692,22 +397,22 @@ void RestClientMainWindow::slotViewJson()
 
 void RestClientMainWindow::slotViewText()
 {
-    ResponseWidget::type type = m_response->render(ResponseWidget::TYPE_TEXT);
+    ResponseWidget::type type = m_mainPanel->m_response->render(ResponseWidget::TYPE_TEXT);
     slotNotifyMenuView(type);
 }
 
 void RestClientMainWindow::slotViewCsv()
 {
-    ResponseWidget::type type = m_response->render(ResponseWidget::TYPE_CSV);
+    ResponseWidget::type type = m_mainPanel->m_response->render(ResponseWidget::TYPE_CSV);
     slotNotifyMenuView(type);
 }
 
 void RestClientMainWindow::slotNotifyMenuView(int pos)
 {
     switch (pos) {
-    case ResponseWidget::TYPE_TEXT: m_textView->setChecked(true);
+    case ResponseWidget::TYPE_TEXT: m_menu->m_textView->setChecked(true);
         break;
-    case ResponseWidget::TYPE_JSON: m_jsonView->setChecked(true);
+    case ResponseWidget::TYPE_JSON: m_menu->m_jsonView->setChecked(true);
     default:
         break;
     }
@@ -716,10 +421,10 @@ void RestClientMainWindow::slotNotifyMenuView(int pos)
 void RestClientMainWindow::renderContentType(const QString &contentType)
 {
     int type = 0;
-    if( contentType.indexOf("application/json", 0, Qt::CaseInsensitive) != -1) {
-        type = m_response->render(ResponseWidget::TYPE_JSON);
+    if( contentType.indexOf("json", 0, Qt::CaseInsensitive) != -1) {
+        type = m_mainPanel->m_response->render(ResponseWidget::TYPE_JSON);
     } else {
-        type = m_response->render(ResponseWidget::TYPE_TEXT);
+        type = m_mainPanel->m_response->render(ResponseWidget::TYPE_TEXT);
     }
 
     slotNotifyMenuView(type);
@@ -727,10 +432,10 @@ void RestClientMainWindow::renderContentType(const QString &contentType)
 
 void RestClientMainWindow::slotAbout()
 {
-    QMessageBox::about(this, "About", "<b>QRestClient</b> - REST client for WEB services developers.<br/>"
-                       "<br/> Supports sending GET, POST, PUT, DELETE requests to URL, managing sending params, heders, contets and logging sended requests.<br/><br/>"
+    QMessageBox::about(this, "About", "<b>QRestClient</b> - REST client.<br/>"
+                       "<br/> Supports sending GET, POST, PUT, DELETE requests to URL, managing sending params, heders, content and logging sent requests.<br/><br/>"
                        "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>"
                        "<br/><br/><b>License:</b> GPL v2"
                        "<br/> 2007 - " + QDateTime::currentDateTime().toString("yyyy") +
-                       "<br/><br/><b>Build</b>: " + QString::number(QDateTime::currentMSecsSinceEpoch()));
+                       "<br/><br/><b>Build </b>: 2.0." + QString::number(QDateTime::currentMSecsSinceEpoch()));
 }

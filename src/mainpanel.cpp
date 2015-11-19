@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by peter komar                                     *
+ *   Copyright (C) 2015 by peter komar                                     *
  *   udldevel@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,47 +17,28 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef REQUESTHISTORY_H
-#define REQUESTHISTORY_H
+#include "mainpanel.h"
+#include "restclientmainwindow.h"
+#include "responsewidget.h"
 
-#include <QSqlError>
-#include <QSqlRecord>
-#include <QDebug>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QCryptographicHash>
-#include <QSettings>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QCoreApplication>
-#include <QVector>
+#include <QPlainTextEdit>
+#include <QVBoxLayout>
 
-class Request;
-
-class RequestHistory
+MainPanel::MainPanel(RestClientMainWindow* app)
 {
-public:
-    RequestHistory();
-    ~RequestHistory();
-    void init();
+    m_response = new ResponseWidget(app);
+    m_response->setMinimumSize(500, 205);
 
-    void addRequest(Request *request);
-    void setGistId(int requestid, const QString& gistId);
-    bool deleteHistory(const QVector<int> requestIds);
-    QSqlQuery* getHistory(const QString& filter);
-    Request* getRequest(int requestId);
+    m_errorResponse = new QPlainTextEdit;
+    m_errorResponse->setPlainText(QObject::tr("Error:"));
+    m_errorResponse->setReadOnly(true);
+    m_errorResponse->setMinimumSize(500, 40);
+    m_errorResponse->setMaximumHeight(40);
 
-private:
-    bool connect(const QString& name);
-    void createDataBase();
-    void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
+    QWidget *main = new QWidget;
+    QVBoxLayout *pvLayout = new QVBoxLayout(main);
+    pvLayout->addWidget(m_response);
+    pvLayout->addWidget(m_errorResponse);
+    app->setCentralWidget(main);
+}
 
-    //Migration functions block
-    void migrateTo2();
-    //End migration functions block
-
-    QSqlDatabase m_database;
-};
-
-#endif // REQUESTHISTORY_H

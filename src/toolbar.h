@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by peter komar                                     *
+ *   Copyright (C) 2015 by peter komar                                     *
  *   udldevel@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,28 +17,20 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef EDITDLGIMPL_H
-#define EDITDLGIMPL_H
+#ifndef TOOLBAR_H
+#define TOOLBAR_H
 
-#include <QDialog>
-#include "ui_dialog.h"
+class RestClientMainWindow;
+class QLineEdit;
+class QComboBox;
 
-class EditDlgImpl : public QDialog, public Ui::EditDlg
+class ToolBar
 {
-    Q_OBJECT
 public:
-    explicit EditDlgImpl(QWidget *parent = 0);
-    QString getName() const;
-    void setName(const QString& name);
+    ToolBar(RestClientMainWindow* app);
 
-    QString getValue() const;
-    void setValue(const QString& value);
-
-signals:
-
-public slots:
-
-
+    QLineEdit *m_url;
+    QComboBox *m_method;
 };
 
-#endif // EDITDLGIMPL_H
+#endif // TOOLBAR_H

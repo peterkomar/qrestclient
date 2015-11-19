@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by peter komar                                     *
+ *   Copyright (C) 2015 by peter komar                                     *
  *   udldevel@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,47 +17,35 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef REQUESTHISTORY_H
-#define REQUESTHISTORY_H
+#ifndef GIST_H
+#define GIST_H
 
-#include <QSqlError>
-#include <QSqlRecord>
-#include <QDebug>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QCryptographicHash>
-#include <QSettings>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QCoreApplication>
-#include <QVector>
+#include <QObject>
 
 class Request;
+class RestClient;
 
-class RequestHistory
+class Gist : public QObject
 {
+    Q_OBJECT
 public:
-    RequestHistory();
-    ~RequestHistory();
-    void init();
+    explicit Gist(QObject *parent = 0);
+    ~Gist();
+    void sendRequest(Request *request);
 
-    void addRequest(Request *request);
-    void setGistId(int requestid, const QString& gistId);
-    bool deleteHistory(const QVector<int> requestIds);
-    QSqlQuery* getHistory(const QString& filter);
-    Request* getRequest(int requestId);
+signals:
+    void published(const QString& url);
+
+public slots:
+    void slotFinish();
 
 private:
-    bool connect(const QString& name);
-    void createDataBase();
-    void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
+    RestClient *m_rest;
+    Request *m_request;
 
-    //Migration functions block
-    void migrateTo2();
-    //End migration functions block
-
-    QSqlDatabase m_database;
+    QString toJson(Request *request);
+    QString getGistUrl(const QString& );
+    QString escapeJson(const QString& text);
 };
 
-#endif // REQUESTHISTORY_H
+#endif // GIST_H

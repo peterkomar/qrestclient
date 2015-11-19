@@ -22,18 +22,22 @@
 #define PARAMSLIST_H
 
 #include <QTreeWidget>
+#include "paramdlg.h"
 
 class ParamsList : public QTreeWidget
 {
     Q_OBJECT
 public:
-    explicit ParamsList(QWidget * parent = 0);
+    explicit ParamsList(ParamDlg::Mode mode, QWidget * parent = 0);
 
 signals:
 
 public slots:
     void slotEditItem();
     void slotDeleteItem();
+
+private:
+    ParamDlg::Mode i_Mode;
 };
 
 #endif // PARAMSLIST_H

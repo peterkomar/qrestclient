@@ -17,47 +17,49 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef REQUESTHISTORY_H
-#define REQUESTHISTORY_H
+#ifndef EDITDLGIMPL_H
+#define EDITDLGIMPL_H
 
-#include <QSqlError>
-#include <QSqlRecord>
-#include <QDebug>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QCryptographicHash>
-#include <QSettings>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QCoreApplication>
-#include <QVector>
+#include <QDialog>
+#include <QMap>
 
-class Request;
+class QLineEdit;
+class QComboBox;
+class QGridLayout;
 
-class RequestHistory
+class ParamDlg : public QDialog
 {
+    Q_OBJECT
 public:
-    RequestHistory();
-    ~RequestHistory();
-    void init();
+    enum Mode { MODE_REQUEST, MODE_HEADER };
+    ParamDlg(Mode mode, QWidget *parent = 0);
 
-    void addRequest(Request *request);
-    void setGistId(int requestid, const QString& gistId);
-    bool deleteHistory(const QVector<int> requestIds);
-    QSqlQuery* getHistory(const QString& filter);
-    Request* getRequest(int requestId);
+    QString getName() const;
+    void setName(const QString& name);
+
+    QString getValue() const;
+    void setValue(const QString& value);
 
 private:
-    bool connect(const QString& name);
-    void createDataBase();
-    void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
+    QLineEdit *m_name;
+    QLineEdit *m_value;
+    QComboBox *m_cName;
+    QComboBox *m_cValue;
 
-    //Migration functions block
-    void migrateTo2();
-    //End migration functions block
+    Mode i_mode;
+    QString m_prevHeader;
 
-    QSqlDatabase m_database;
+    QMap<QString, QStringList> m_preHeaders;
+
+    void guiHeader(QGridLayout *gridLayout);
+    void guiRequest(QGridLayout *gridLayout);
+
+    void initPredefinedHeaders();
+
+    void addHeader(const QString& header, QStringList& values);
+
+private slots:
+    void slotChangeHeader(const QString& );
 };
 
-#endif // REQUESTHISTORY_H
+#endif // EDITDLGIMPL_H

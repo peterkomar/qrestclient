@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by peter komar                                     *
+ *   Copyright (C) 2015 by peter komar                                     *
  *   udldevel@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,47 +17,24 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#ifndef REQUESTHISTORY_H
-#define REQUESTHISTORY_H
+#include "rightpanel.h"
+#include "restclientmainwindow.h"
 
-#include <QSqlError>
-#include <QSqlRecord>
-#include <QDebug>
-#include <QDateTime>
-#include <QDir>
-#include <QFile>
-#include <QCryptographicHash>
-#include <QSettings>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QCoreApplication>
-#include <QVector>
+#include <QTextEdit>
+#include <QDockWidget>
 
-class Request;
-
-class RequestHistory
+RightPanel::RightPanel(RestClientMainWindow* app)
 {
-public:
-    RequestHistory();
-    ~RequestHistory();
-    void init();
+    m_responseHeaders = new QTextEdit;
+    m_responseHeaders->setAcceptRichText(false);
+    m_responseHeaders->setReadOnly(true);
 
-    void addRequest(Request *request);
-    void setGistId(int requestid, const QString& gistId);
-    bool deleteHistory(const QVector<int> requestIds);
-    QSqlQuery* getHistory(const QString& filter);
-    Request* getRequest(int requestId);
+    QDockWidget *dock = new QDockWidget(app);
+    dock->setObjectName("Right");
+    dock->setWindowTitle(QObject::tr("Response Headers"));
+    dock->setWidget(m_responseHeaders);
+    dock->setFeatures(QDockWidget::DockWidgetMovable
+                      | QDockWidget::DockWidgetFloatable);
+    app->addDockWidget(Qt::LeftDockWidgetArea, dock);
+}
 
-private:
-    bool connect(const QString& name);
-    void createDataBase();
-    void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
-
-    //Migration functions block
-    void migrateTo2();
-    //End migration functions block
-
-    QSqlDatabase m_database;
-};
-
-#endif // REQUESTHISTORY_H

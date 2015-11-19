@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by peter komar                                     *
+ *   Copyright (C) 2015 by peter komar                                     *
  *   udldevel@gmail.com                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -17,30 +17,36 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "editdlgimpl.h"
+#ifndef REQUESTDETAILSDLG_H
+#define REQUESTDETAILSDLG_H
 
-EditDlgImpl::EditDlgImpl(QWidget *parent) :
-    QDialog(parent)
-{
-    setupUi(this);
-}
+#include <QDialog>
 
-void EditDlgImpl::setName(const QString &name)
-{
-    m_name->setText(name);
-}
+class QTextEdit;
+class QLineEdit;
+class Request;
+class Gist;
+class QRadioButton;
 
-QString EditDlgImpl::getName() const
+class RequestDetailsDlg : public QDialog
 {
-    return m_name->text();
-}
+    Q_OBJECT
+public:
+    explicit RequestDetailsDlg(Request* request, QWidget *parent = 0);
+    ~RequestDetailsDlg();
 
-void EditDlgImpl::setValue(const QString &value)
-{
-    m_value->setText(value);
-}
+signals:
 
-QString EditDlgImpl::getValue() const
-{
-    return m_value->text();
-}
+public slots:
+    void slotSendToBuffer();
+    void slotSendToGist();
+    void slotGistUrl(const QString& );
+
+private:
+    QTextEdit *m_viewRequest;
+    QTextEdit *m_viewResponse;
+    Request* m_request;
+    Gist *m_gist;
+};
+
+#endif // REQUESTDETAILSDLG_H
