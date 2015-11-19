@@ -11,6 +11,8 @@ Featuers:
 * Requests history cleaner
 * JSON response viewer
 * CSV response viewer
+* Request details viewer
+* Share requet to Gist
 
 Requirements:
 * [QT 5](http://www.qt.io/)
