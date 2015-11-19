@@ -42,7 +42,7 @@ LeftPanel::LeftPanel(RestClientMainWindow* app)
     m_requestContentType->addItems(types);
     m_requestContentType->setEditable(true);
 
-    QWidget *rawTab              = new QWidget;
+    QWidget *rawTab = new QWidget;
 
     QHBoxLayout *hLayout = new QHBoxLayout;
     hLayout->addWidget(new QLabel(QObject::tr("Content Type:")));
@@ -54,6 +54,7 @@ LeftPanel::LeftPanel(RestClientMainWindow* app)
     rawTab->setLayout(rawLayout);
 
     m_tab = new QTabWidget;
+    m_tab->setTabPosition(QTabWidget::South);
     m_tab->addTab(buildParamsWidget(m_params), QObject::tr("Params"));
     m_tab->addTab(buildParamsWidget(m_headers), QObject::tr("Headers"));
     m_tab->addTab(rawTab, QObject::tr("Content to Send"));

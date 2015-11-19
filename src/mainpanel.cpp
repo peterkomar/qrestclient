@@ -30,7 +30,7 @@ MainPanel::MainPanel(RestClientMainWindow* app)
     m_response->setMinimumSize(500, 205);
 
     m_errorResponse = new QPlainTextEdit;
-    m_errorResponse->setPlainText(QObject::tr("Error:"));
+    m_errorResponse->setPlainText(QObject::tr(""));
     m_errorResponse->setReadOnly(true);
     m_errorResponse->setMinimumSize(500, 40);
     m_errorResponse->setMaximumHeight(40);

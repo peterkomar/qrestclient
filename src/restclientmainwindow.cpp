@@ -186,9 +186,15 @@ void RestClientMainWindow::slotSendRequest()
         ++headerIterator;
     }
 
-    QByteArray rawBody  = m_leftPanel->m_rawContent->toPlainText().toUtf8();
-    m_request->addRequestHeader("Content-Type", m_leftPanel->m_requestContentType->currentText());
-    m_request->setRaw(rawBody);
+    QString raw = m_leftPanel->m_rawContent->toPlainText().trimmed();
+    if (!raw.isEmpty()) {
+        m_request->setRaw(raw.toUtf8());
+    }
+
+    QString contentType = m_leftPanel->m_requestContentType->currentText().trimmed();
+    if (!contentType.isEmpty()) {
+        m_request->addRequestHeader("Content-Type", contentType);
+    }
 
     m_restClient = new RestClient;
     connect(m_restClient, SIGNAL(finish()), this, SLOT(slotFinishRequest()));
