@@ -45,6 +45,7 @@ private:
 
     QString toJson(Request *request);
     QString getGistUrl(const QString& );
+    QString escapeJson(const QString& text);
 };
 
 #endif // GIST_H

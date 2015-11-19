@@ -131,9 +131,7 @@ void RequestHistory::createDataBase()
 void RequestHistory::addRequest(Request *request)
 {    
     QSqlQuery q(m_database);
-
-    q.prepare("SELECT max(id) FROM requests");
-    if( !q.exec() ) {
+    if( !q.exec("SELECT max(id) FROM requests") ) {
         qDebug() << "Error execution query: " << q.lastQuery() << " Error: " << q.lastError();
         throw "Error execution query";
     }
@@ -183,6 +181,19 @@ void RequestHistory::addRequest(Request *request)
     }
 
     delete query;
+}
+
+void RequestHistory::setGistId(int requestId, const QString& gistId)
+{
+     QSqlQuery q(m_database);
+     q.prepare("INSERT INTO response_headers (request_id, name, value) VALUES (:request_id, 'Gist-ID', :value)");
+     q.bindValue(":request_id", requestId);
+     q.bindValue(":value", gistId);
+
+     if( !q.exec() ) {
+         qDebug() << "Error execution query: " << q.lastQuery() << " Error: " << q.lastError();
+         throw "Error execution query";
+     }
 }
 
 void RequestHistory::addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair)

@@ -23,13 +23,17 @@
 #include <QDialog>
 
 class QTextEdit;
+class QLineEdit;
 class Request;
+class Gist;
+class QRadioButton;
 
 class RequestDetailsDlg : public QDialog
 {
     Q_OBJECT
 public:
     explicit RequestDetailsDlg(Request* request, QWidget *parent = 0);
+    ~RequestDetailsDlg();
 
 signals:
 
@@ -42,6 +46,7 @@ private:
     QTextEdit *m_viewRequest;
     QTextEdit *m_viewResponse;
     Request* m_request;
+    Gist *m_gist;
 };
 
 #endif // REQUESTDETAILSDLG_H

@@ -24,6 +24,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QDebug>
+#include <QMessageBox>
 
 Gist::Gist(QObject *parent)
     : QObject(parent)
@@ -46,7 +47,7 @@ void Gist::sendRequest(Request *request)
 }
 
 void Gist::slotFinish()
-{
+{    
     if (m_request->responseCode() == 201) {
         emit published(getGistUrl(m_request->response()));
     } else {
@@ -63,13 +64,45 @@ QString Gist::toJson(Request *request)
           "\"description\": \"QRequestClient\","
           "\"public\": false,"
           "\"files\": {"
-          "\"reques.json\": {"
+          "\"request.txt\": {"
           "  \"content\": \"%1\""
+          " },"
+          "\"response.txt\": {"
+          "  \"content\": \"%2\""
           " }"
           "}"
         "}";
+   QStringList str = request->toString();
 
-   return body;
+   return body.arg(escapeJson(str[0])).arg(escapeJson(str[1]));
+}
+
+QString Gist::escapeJson(const QString& text)
+{
+    QString res;
+    for(QString::const_iterator itr(text.begin()); itr != text.end(); ++itr) {
+        if (*itr == '\\') {
+            res += "\\\\";
+        } else if (*itr == '"') {
+            res += "\\\"";
+        } else if (*itr == '/') {
+            res += "\\/";
+        } else if (*itr == '\b') {
+             res += "\\b";
+        } else if (*itr == '\f') {
+            res += "\\f";
+        } else if (*itr == '\n') {
+            res += "\\n";
+        } else if (*itr == '\r') {
+            res += "\\r";
+        } else if (*itr == '\t') {
+            res += "\\t";
+        } else {
+            res += *itr;
+        }
+    }
+
+    return res;
 }
 
 QString Gist::getGistUrl(const QString& json)

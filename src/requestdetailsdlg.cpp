@@ -24,15 +24,22 @@
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QGridLayout>
+#include <QtWidgets/QLabel>
 #include <QClipboard>
 #include <QApplication>
 #include <QPushButton>
+#include <QDesktopServices>
 #include <QMessageBox>
+#include <QLineEdit>
+#include <QRadioButton>
+#include <QGroupBox>
 
 RequestDetailsDlg::RequestDetailsDlg(Request* request, QWidget *parent)
     : QDialog(parent)
     ,m_request(request)
+    ,m_gist(new Gist(parent))
 {
+    connect(m_gist, SIGNAL(published(QString)), this, SLOT(slotGistUrl(QString)));
     QGridLayout *gridLayout = new QGridLayout(this);
 
     QHBoxLayout *phLayout = new QHBoxLayout;
@@ -56,13 +63,13 @@ RequestDetailsDlg::RequestDetailsDlg(Request* request, QWidget *parent)
     m_viewRequest = new QTextEdit(this);
     m_viewRequest->setFont(QFont("Monospace"));
     m_viewRequest->setReadOnly(true);
-    m_viewRequest->setWordWrapMode(QTextOption::WordWrap);
+    m_viewRequest->setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
     m_viewRequest->setHtml(m_request->requestToHtml());
 
     m_viewResponse = new QTextEdit(this);
     m_viewResponse->setFont(QFont("Monospace"));
     m_viewResponse->setReadOnly(true);
-    m_viewResponse->setWordWrapMode(QTextOption::WordWrap);
+    m_viewResponse->setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
     m_viewResponse->setHtml(m_request->responseToHtml());
 
     gridLayout->addItem(phLayout, 0, 0, 1, 2, Qt::AlignLeft);
@@ -73,23 +80,35 @@ RequestDetailsDlg::RequestDetailsDlg(Request* request, QWidget *parent)
     resize(900, 500);
 }
 
+RequestDetailsDlg::~RequestDetailsDlg()
+{
+    delete m_gist;
+}
+
 void RequestDetailsDlg::slotSendToBuffer()
 {
     QClipboard *clipboard = QApplication::clipboard();
-    clipboard->setText(m_request->toString());
+    clipboard->setText(m_request->toString().join("/n/n/n"));
 }
 
 void RequestDetailsDlg::slotSendToGist()
 {
-    Gist *gist = new Gist(this);
-    connect(gist, SIGNAL(published(QString)), this, SLOT(slotGistUrl(QString)));
-    gist->sendRequest(m_request);
+    if (!m_request->getGistId().isEmpty()) {
+        QDesktopServices::openUrl(m_request->getGistId());
+    } else {
+        m_gist->sendRequest(m_request);
+        QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    }
 }
 
 void RequestDetailsDlg::slotGistUrl(const QString& url)
 {
-    QMessageBox::information(this, tr("Gist"), QString("%1: <a href=\"%2\">%2<a>")
-                             .arg(tr("Gist created at"))
-                             .arg(url));
+    QApplication::restoreOverrideCursor();
+    if (url == "Error") {
+        QMessageBox::critical(this, "Gist Error", "Can't create Gist");
+    } else {
+        m_request->setGistId(url);
+        QDesktopServices::openUrl(url);
+    }
 }
 

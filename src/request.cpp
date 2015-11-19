@@ -27,8 +27,8 @@ Request::Request(const QString& url, const QString& method)
     ,m_method(method)
 {}
 
-QString Request::toString()
-{
+QStringList Request::toString()
+{    
     QString res;
 
     res = "HTTP Request\n\n";
@@ -74,7 +74,7 @@ QString Request::toString()
         response += text + "\n";
     }
 
-    return res + "\n\n\n" + response;
+    return QStringList() << res << response;
 }
 
 QString Request::requestToHtml()
@@ -174,6 +174,19 @@ QString Request::responseHeadersAsString()
         }
         return res;
     }
+}
+
+QString Request::getGistId()
+{
+    if (m_responseHeaders.contains("Gist-ID")) {
+        return m_responseHeaders["Gist-ID"];
+    }
+    return QString("");
+}
+
+void Request::setGistId(const QString& id)
+{
+    m_responseHeaders["Gist-ID"] = id;
 }
 
 QString Request::getRequestContentType()

@@ -48,6 +48,10 @@
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
+    m_request    = 0;
+    m_waitDialog = 0;
+    m_restClient = 0;
+
     setMinimumSize(1000, 600);
     setWindowTitle("QRestClient");
 
@@ -57,9 +61,6 @@ RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     m_rightPanel  = new RightPanel(this);
     m_bottomPanel = new BottomPabel(this);
     m_menu        = new Menu(this);
-
-    m_waitDialog = 0;
-    m_restClient = 0;
 
     m_history = new RequestHistory();
     m_history->init();
@@ -98,31 +99,6 @@ void RestClientMainWindow::keyPressEvent(QKeyEvent * event)
     if (event->key() == Qt::Key_Escape) {
         slotHideHistoryFilter();
         event->accept();
-    }
-}
-
-void RestClientMainWindow::waitDialog()
-{
-    m_waitDialog = new QMessageBox(this);
-    m_waitDialog->setStandardButtons(QMessageBox::Abort);
-    m_waitDialog->setText(tr("Please wait, sending request ..."));
-    int btn = m_waitDialog->exec();
-    if (btn == QMessageBox::Abort && m_restClient) {
-        m_restClient->abort();
-    }
-}
-
-void RestClientMainWindow::clearItems(QList<QTreeWidgetItem *>& items)
-{
-    QVector<int> ids;
-    for (int i = 0; i < items.size(); ++i) {
-        ids << ((QTreeWidgetItem *)items.at(i))->text(0).toInt();
-    }
-
-    if (m_history->deleteHistory(ids)) {
-        qDeleteAll(items);
-    } else {
-        QMessageBox::critical(this, tr("Error delete"), tr("Can't delete item(s) beacuses database"));
     }
 }
 
@@ -166,11 +142,22 @@ void RestClientMainWindow::setTitle(const QString& method, const QString& url)
     setWindowTitle(title + QString(" - [%1] %2").arg(method).arg(url));
 }
 
+void RestClientMainWindow::waitDialog()
+{
+    m_waitDialog = new QMessageBox(this);
+    m_waitDialog->setStandardButtons(QMessageBox::Abort);
+    m_waitDialog->setText(tr("Please wait, sending request ..."));
+    int btn = m_waitDialog->exec();
+    if (btn == QMessageBox::Abort && m_restClient) {
+        m_restClient->abort();
+    }
+}
+
 //slots
 void RestClientMainWindow::slotSendRequest()
 {
     parseUrlParams();
-    QString url = m_toolBar->m_url->text();
+    QString url = m_toolBar->m_url->text().trimmed();
     if( url.isEmpty()
             || url.left(4) != "http"
             || url == "http://"
@@ -301,6 +288,9 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item)
     } else {
         m_leftPanel->m_requestContentType->addItem(s);
     }
+
+    delete m_request;
+    m_request = 0;
 }
 
 void RestClientMainWindow::slotRequestDetails()
@@ -312,11 +302,19 @@ void RestClientMainWindow::slotRequestDetails()
 
     QTreeWidgetItem *item = list.first();
     Request* request = m_history->getRequest(item->text(0).toInt());
+    QString gist = request->getGistId();
 
     RequestDetailsDlg *dlg = new RequestDetailsDlg(request, this);
     dlg->setWindowTitle(tr("Details: %1").arg(item->text(2).toHtmlEscaped()));
     dlg->exec();
     delete dlg;
+
+    /**
+    * Save Gist id if it first time
+    */
+    if (gist.isEmpty() && !request->getGistId().isEmpty()) {
+        m_history->setGistId(item->text(0).toInt(), request->getGistId());
+    }
 
     delete request;
 }
@@ -333,6 +331,20 @@ void RestClientMainWindow::slotHistoryRemoveSelected()
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         clearItems(list);
         QApplication::restoreOverrideCursor();
+    }
+}
+
+void RestClientMainWindow::clearItems(QList<QTreeWidgetItem *>& items)
+{
+    QVector<int> ids;
+    for (int i = 0; i < items.size(); ++i) {
+        ids << ((QTreeWidgetItem *)items.at(i))->text(0).toInt();
+    }
+
+    if (m_history->deleteHistory(ids)) {
+        qDeleteAll(items);
+    } else {
+        QMessageBox::critical(this, tr("Error delete"), tr("Can't delete item(s) beacuses database"));
     }
 }
 

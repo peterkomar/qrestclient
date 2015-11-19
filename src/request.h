@@ -29,7 +29,7 @@ public:
     Request(const QString& url, const QString& method);
 
     //Format functions
-    QString toString();
+    QStringList toString();
     QString requestToHtml();
     QString responseToHtml();
 
@@ -37,6 +37,9 @@ public:
     QString responseHeadersAsString();
     QString getRequestContentType();
     QString statusMessage();
+
+    QString getGistId();
+    void setGistId(const QString& id);
 
     QString url() const { return m_url; }
     QString method() const { return m_method; }

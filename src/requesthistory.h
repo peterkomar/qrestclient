@@ -43,6 +43,7 @@ public:
     void init();
 
     void addRequest(Request *request);
+    void setGistId(int requestid, const QString& gistId);
     bool deleteHistory(const QVector<int> requestIds);
     QSqlQuery* getHistory(const QString& filter);
     Request* getRequest(int requestId);
