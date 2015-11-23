@@ -1,7 +1,8 @@
 qrestclient
 ===========
+![alt tag](https://raw.githubusercontent.com/peterkomar/qrestclient/master/qrestclient.png)
 
-QRestClient testing tool for sending REST requests with different GET, POST, PUT, DELETE parameters, heders, raw body etc.
+**QRestClient** testing tool for sending REST requests with different GET, POST, PUT, DELETE parameters, heders, raw body etc.
 
 This tool will be helpful for developers working on web API services.
 
