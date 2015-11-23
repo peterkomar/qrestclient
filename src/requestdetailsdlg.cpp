@@ -94,7 +94,7 @@ void RequestDetailsDlg::slotSendToBuffer()
 void RequestDetailsDlg::slotSendToGist()
 {
     if (!m_request->getGistId().isEmpty()) {
-        QDesktopServices::openUrl(m_request->getGistId());
+        QDesktopServices::openUrl(QUrl(m_request->getGistId(), QUrl::TolerantMode));
     } else {
         m_gist->sendRequest(m_request);
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));

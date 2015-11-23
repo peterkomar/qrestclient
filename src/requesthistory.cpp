@@ -96,7 +96,7 @@ void RequestHistory::createDataBase()
                 "type varchar,"
                 "url varchar,"
                 "response mediumtext,"
-                "error varchar,"
+                "error varchar"
     ")"
     << "CREATE TABLE requests_params ("
                 "request_id int,"
