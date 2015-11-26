@@ -136,9 +136,7 @@ QString Request::responseToHtml()
     QString res(style());
     res += QString("<b>%1</b><br /><br />").arg("HTTP Response");
 
-    res += QString("<span class='%1'>%2</span><br />")
-            .arg((i_responseCode == 200)? "method" : "status")
-            .arg(statusMessage());
+    res += statusMessage() + "<br />";
 
     QHashIterator<QString, QString> i(m_responseHeaders);
     while (i.hasNext()) {
@@ -157,7 +155,10 @@ QString Request::responseToHtml()
 
 QString Request::statusMessage()
 {
-    return  QString("%1 %2").arg(i_responseCode).arg(m_message);
+    return QString("<span class='%1'>%2 %3</span>")
+                .arg((i_responseCode >= 200 && i_responseCode < 300)? "method" : "status")
+                .arg(i_responseCode)
+                .arg(m_message);
 }
 
 QString Request::responseHeadersAsString()
@@ -166,7 +167,8 @@ QString Request::responseHeadersAsString()
     if (!m_responseHeadersString.isEmpty()) {
         return m_responseHeadersString;
     } else {
-        QString res;
+        QString res(style());
+        res += statusMessage() + "<br />";
         QHashIterator<QString, QString> i(m_responseHeaders);
         while (i.hasNext()) {
             i.next();

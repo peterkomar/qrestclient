@@ -57,6 +57,8 @@ private:
     void migrateTo2();
     //End migration functions block
 
+    void query(QSqlQuery* query, const QString& string = "");
+
     QSqlDatabase m_database;
 };
 

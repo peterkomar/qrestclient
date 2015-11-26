@@ -159,10 +159,10 @@ void RestClient::slotReplyError(QNetworkReply::NetworkError error)
     QVariant statusCode = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
     QVariant reason = m_reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute);
 
+    m_request->setError(error_string);
     m_request->setMessage(reason.toString());
     m_request->setResponseCode(statusCode.toInt());
     QString res = m_request->response();
-    res += "\n\n" + error_string;
     m_request->setResponse(res);
 
     parseResponseHeaders();

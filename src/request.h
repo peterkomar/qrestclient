@@ -51,6 +51,9 @@ public:
     QString message() const { return m_message; }
     void setMessage(const QString& message) { m_message = message; }
 
+    QString error() const { return m_error; }
+    void setError(const QString& error) { m_error = error; }
+
     int responseCode() { return i_responseCode; }
     void setResponseCode(int code) { i_responseCode = code; }
 
@@ -74,6 +77,7 @@ private:
     QString m_method;
     QString m_response;
     QString m_message;
+    QString m_error;
     QHash<QString, QString> m_requestHeaders;
     QHash<QString, QString> m_requestParams;
     QString m_requestRaw;
