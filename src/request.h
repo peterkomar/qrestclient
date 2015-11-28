@@ -82,6 +82,8 @@ private:
     int i_responseCode;
 
     QString style();
+    QString format(const QString& text, const QString& type);
+    QString parseJson(const QString& );
 };
 
 #endif // REQUEST_H

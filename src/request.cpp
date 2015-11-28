@@ -21,6 +21,7 @@
 
 #include <QUrlQuery>
 #include <QDebug>
+#include <QJsonDocument>
 
 Request::Request(const QString& url, const QString& method)
     :m_url(url)
@@ -50,7 +51,7 @@ QStringList Request::toString()
                        .arg(query.query(QUrl::FullyDecoded)));
     }
 
-    QString raw = m_requestRaw.simplified();
+    QString raw = format(m_requestRaw, getRequestContentType());
     if (!raw.isEmpty()) {
         request.append(raw);
     }
@@ -66,7 +67,7 @@ QStringList Request::toString()
         }
     }
     response.append("\n\n");
-    QString text = m_response.simplified();
+    QString text = format(m_response, getResponseContentType());
     if (!text.isEmpty()) {
         response.append(text);
     }
@@ -104,8 +105,9 @@ QString Request::requestToHtml()
                    .arg(query.query(QUrl::FullyDecoded)));
     }
 
-    QString raw = m_requestRaw.simplified();
+    QString raw = format(m_requestRaw, getRequestContentType());
     if (!raw.isEmpty()) {
+        raw.replace(" ", "&nbsp;").replace("\n", "<br />");
         res.append(QString("<br /><code>%1</code>").arg(raw));
     }
     return res;
@@ -139,8 +141,9 @@ QString Request::responseToHtml()
         res.append(QString("<span class='tagHeader'>%1</span>: %2<br />").arg(i.key()).arg(i.value()));
     }
 
-    QString text = m_response.simplified();
+    QString text = format(m_response, getResponseContentType());
     if (!text.isEmpty()) {
+        text.replace(" ", "&nbsp;").replace("\n", "<br />");
         res.append(QString("<br /><code>%1</code>").arg(text));
     }
 
@@ -215,5 +218,27 @@ void Request::addResponseHeader(const QString& key, const QString& value)
 void Request::addRequestParam(const QString& key, const QString& value)
 {
     m_requestParams.insert(key, value);
+}
+
+QString Request::format(const QString& text, const QString& type)
+{
+    QString s = text.simplified();
+    if( type.indexOf("json", 0, Qt::CaseInsensitive) != -1) {
+        s = parseJson(s);
+    }
+
+    return s;
+}
+
+QString Request::parseJson(const QString &json)
+{
+    QString s = json;
+    QJsonParseError *error = new QJsonParseError;
+    QJsonDocument doc = QJsonDocument::fromJson(s.toUtf8(), error);
+    if (error->error == QJsonParseError::NoError) {
+        s = doc.toJson(QJsonDocument::Indented);
+    }
+    delete error;
+    return s;
 }
 
