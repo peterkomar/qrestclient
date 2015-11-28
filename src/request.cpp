@@ -163,19 +163,19 @@ QString Request::statusMessage()
 
 QString Request::responseHeadersAsString()
 {
-    //Supports old version
-    if (!m_responseHeadersString.isEmpty()) {
-        return m_responseHeadersString;
-    } else {
-        QString res(style());
-        res += statusMessage() + "<br />";
-        QHashIterator<QString, QString> i(m_responseHeaders);
-        while (i.hasNext()) {
-            i.next();
-            res += "<b>"+i.key() + ":</b> " + i.value() +"<br />";
-        }
-        return res;
+    QString res(style());
+    res += statusMessage() + "<br />";
+    QHashIterator<QString, QString> i(m_responseHeaders);
+    while (i.hasNext()) {
+        i.next();
+        res += "<b>"+i.key() + ":</b> " + i.value() +"<br />";
     }
+
+    if (!m_error.isEmpty()) {
+        res += QString("<br /><b>Server Replied:</b> %1").arg(m_error);
+    }
+
+    return res;
 }
 
 QString Request::getGistId()
@@ -202,18 +202,8 @@ QString Request::getRequestContentType()
 QString Request::getResponseContentType()
 {
     QString type = "text";
-    //Support old version
-    if (!m_responseHeadersString.isEmpty()) {
-        int pos = 0;
-
-        if((pos = m_responseHeadersString.indexOf("content-type:", 0, Qt::CaseInsensitive)) != -1) {
-            int end = m_responseHeadersString.indexOf("\n", pos+1);
-            type = m_responseHeadersString.mid(pos, end-pos).trimmed();
-        }
-    } else {
-        if (m_responseHeaders.contains("Content-Type")) {
-            type = m_responseHeaders["Content-Type"];
-        }
+    if (m_responseHeaders.contains("Content-Type")) {
+        type = m_responseHeaders["Content-Type"];
     }
     return type;
 }

@@ -42,7 +42,6 @@
 #include <QUrlQuery>
 #include <QComboBox>
 #include <QTextEdit>
-#include <QPlainTextEdit>
 #include <QAction>
 
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
@@ -202,7 +201,6 @@ void RestClientMainWindow::slotSendRequest()
     m_restClient->sendRequest(m_request);
 
     m_mainPanel->m_response->clear();
-    m_mainPanel->m_errorResponse->clear();
     waitDialog();
 }
 
@@ -210,11 +208,10 @@ void RestClientMainWindow::slotFinishRequest()
 {
     m_rightPanel->m_responseHeaders->setText(m_request->responseHeadersAsString());
     m_mainPanel->m_response->setText(m_request->response());
-    m_mainPanel->m_errorResponse->setPlainText(m_request->statusMessage());
     renderContentType(m_request->getResponseContentType());
     saveHistory();
 
-    m_waitDialog->close();
+    m_waitDialog->accept();
     delete m_waitDialog;
     m_waitDialog = 0;
     delete m_request;
@@ -277,7 +274,6 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item)
     m_toolBar->m_url->setText(m_request->url());
     m_toolBar->m_method->setCurrentText(m_request->method());
     m_mainPanel->m_response->setText(m_request->response());
-    m_mainPanel->m_errorResponse->setPlainText(m_request->statusMessage());
     m_rightPanel->m_responseHeaders->setText(m_request->responseHeadersAsString());
     renderContentType(m_request->getResponseContentType());
 

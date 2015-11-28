@@ -361,7 +361,10 @@ Request* RequestHistory::getRequest(int requestId)
     request->setResponseCode(q->value("code").toInt());
     request->setError(q->value("error").toString());
     request->setMessage(q->value("message").toString());
-    request->setGistId(q->value("gist_id").toString());
+    QString gistId = q->value("gist_id").toString();
+    if (!gistId.isEmpty()) {
+        request->setGistId(q->value("gist_id").toString());
+    }
     q->clear();
 
     //load params
