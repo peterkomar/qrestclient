@@ -58,7 +58,7 @@ QStringList Request::toString()
 
     //Build response
     QString response("HTTP Response\n\n");
-    response.append(statusMessage()).append("\n");
+    response.append(statusMessage(false)).append("\n");
     if (!m_responseHeaders.isEmpty()) {
         i = m_responseHeaders;
         while (i.hasNext()) {
@@ -150,12 +150,16 @@ QString Request::responseToHtml()
     return res;
 }
 
-QString Request::statusMessage()
+QString Request::statusMessage(bool asHtml)
 {
-    return QString("<span class='%1'>%2 %3</span>")
-                .arg((i_responseCode >= 200 && i_responseCode < 300)? "method" : "status")
-                .arg(i_responseCode)
-                .arg(m_message);
+    QString tmpl("%1%2 %3");
+    if (asHtml) {
+        tmpl = QString("<span class='%1'>%2 %3</span>")
+                .arg((i_responseCode >= 200 && i_responseCode < 300)? "method" : "status");
+    }
+    return tmpl.arg("")
+            .arg(i_responseCode)
+            .arg(m_message);
 }
 
 QString Request::responseHeadersAsString()

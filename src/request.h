@@ -36,7 +36,7 @@ public:
     QString getResponseContentType();
     QString responseHeadersAsString();
     QString getRequestContentType();
-    QString statusMessage();
+    QString statusMessage(bool asHtml = true);
 
     QString getGistId();
     void setGistId(const QString& id);

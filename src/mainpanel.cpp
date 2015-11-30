@@ -26,7 +26,6 @@
 MainPanel::MainPanel(RestClientMainWindow* app)
 {
     m_response = new ResponseWidget(app);
-    //m_response->setMinimumSize(500, 205);
     app->setCentralWidget(m_response);
 }
 
