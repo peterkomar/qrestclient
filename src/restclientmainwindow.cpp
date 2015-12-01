@@ -191,7 +191,7 @@ void RestClientMainWindow::slotSendRequest()
     }
 
     QString contentType = m_leftPanel->m_requestContentType->currentText().trimmed();
-    if (!contentType.isEmpty()) {
+    if (!contentType.isEmpty() && !raw.isEmpty()) {
         m_request->addRequestHeader("Content-Type", contentType);
     }
 

@@ -153,14 +153,16 @@ QString Request::responseToHtml()
 
 QString Request::statusMessage(bool asHtml)
 {
-    QString tmpl("%1%2 %3");
     if (asHtml) {
-        tmpl = QString("<span class='%1'>%2 %3</span>")
-                .arg((i_responseCode >= 200 && i_responseCode < 300)? "method" : "status");
+        return QString("<span class='%1'>%2 %3</span>")
+                .arg((i_responseCode >= 200 && i_responseCode < 300)? "method" : "status")
+                .arg(i_responseCode)
+                .arg(m_message);
+    } else {
+        return QString("%2 %3")
+                .arg(i_responseCode)
+                .arg(m_message);
     }
-    return tmpl.arg("")
-            .arg(i_responseCode)
-            .arg(m_message);
 }
 
 QString Request::responseHeadersAsString()
