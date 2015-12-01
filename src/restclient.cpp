@@ -25,6 +25,7 @@
 #include <QUrlQuery>
 #include <QUrl>
 #include <QNetworkRequest>
+#include <QSslConfiguration>
 
 RestClient::RestClient(QObject *parent)
     : QObject(parent)

@@ -22,6 +22,7 @@
 #include <QUrlQuery>
 #include <QDebug>
 #include <QJsonDocument>
+#include <QStringList>
 
 Request::Request(const QString& url, const QString& method)
     :m_url(url)

@@ -33,6 +33,7 @@
 #include <QLineEdit>
 #include <QRadioButton>
 #include <QGroupBox>
+#include <QUrl>
 
 RequestDetailsDlg::RequestDetailsDlg(Request* request, QWidget *parent)
     : QDialog(parent)
