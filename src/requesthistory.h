@@ -49,7 +49,7 @@ public:
     Request* getRequest(int requestId);
 
 private:
-    bool connect(const QString& name);
+    void connect(const QString& name);
     void createDataBase();
     void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
 

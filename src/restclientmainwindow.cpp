@@ -58,12 +58,20 @@ RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     m_toolBar     = new ToolBar(this);
     m_leftPanel   = new LeftPanel(this);
     m_rightPanel  = new RightPanel(this);
-    m_bottomPanel = new BottomPabel(this);
-    m_menu        = new Menu(this);
+    m_bottomPanel = 0;
 
-    m_history = new RequestHistory();
-    m_history->init();
-    loadHistory();
+    try {
+        m_history = new RequestHistory();
+        m_history->init();
+        m_bottomPanel = new BottomPabel(this);
+        loadHistory();
+    } catch(QString error) {
+        delete m_history;
+        m_history = 0;
+        QMessageBox::warning(this, tr("Init"), error);
+    }
+
+    m_menu = new Menu(this);
 
     QSettings setting("UDL", "qrestclient");
     QByteArray arr = setting.value("gui/state").toByteArray();
@@ -76,11 +84,13 @@ RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
 
 RestClientMainWindow::~RestClientMainWindow()
 {
-    delete m_history;
+    if (m_history) {
+        delete m_history;
+        delete m_bottomPanel;
+    }
     delete m_toolBar;
     delete m_leftPanel;
-    delete m_rightPanel;
-    delete m_bottomPanel;
+    delete m_rightPanel;    
     delete m_menu;
 }
 
@@ -221,6 +231,10 @@ void RestClientMainWindow::slotFinishRequest()
 
 void RestClientMainWindow::saveHistory()
 {
+    if (!m_history) {
+        return;
+    }
+
     m_history->addRequest(m_request);
     m_bottomPanel->m_filterEdit->clear();
     loadHistory();
@@ -228,6 +242,10 @@ void RestClientMainWindow::saveHistory()
 
 void RestClientMainWindow::loadHistory(const QString& filter)
 {
+    if (!m_history) {
+        return;
+    }
+
     QSqlQuery *q = m_history->getHistory(filter);
     m_bottomPanel->m_historyWidget->clear();
     while (q->next()) {
@@ -265,6 +283,10 @@ void RestClientMainWindow::loadPairs(const QHash<QString, QString>& pair, Params
 
 void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item)
 {
+    if (!m_history) {
+        return;
+    }
+
     try {
       m_request = m_history->getRequest(item->text(0).toInt());
     } catch(bool ) {
@@ -297,6 +319,10 @@ void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item)
 
 void RestClientMainWindow::slotRequestDetails()
 {
+    if (!m_history) {
+        return;
+    }
+
     QList<QTreeWidgetItem *> list = m_bottomPanel->m_historyWidget->selectedItems();
     if( list.isEmpty() ) {
         return;
@@ -338,6 +364,10 @@ void RestClientMainWindow::slotHistoryRemoveSelected()
 
 void RestClientMainWindow::clearItems(QList<QTreeWidgetItem *>& items)
 {
+    if (!m_history) {
+        return;
+    }
+
     QVector<int> ids;
     for (int i = 0; i < items.size(); ++i) {
         ids << ((QTreeWidgetItem *)items.at(i))->text(0).toInt();
@@ -385,6 +415,7 @@ void RestClientMainWindow::slotShowHistoryFilter()
 void RestClientMainWindow::slotHideHistoryFilter()
 {
     m_bottomPanel->m_filterEdit->setVisible(false);
+    loadHistory();
 }
 
 void RestClientMainWindow::slotViewJson()

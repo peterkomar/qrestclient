@@ -37,8 +37,7 @@ void RequestHistory::init()
     QDir home = QDir::home();
     if( !home.exists(".qrestclient") ) {
         if( !home.mkdir(".qrestclient") ) {
-            qDebug() << "Fatal create directory";
-            return;
+            throw QObject::tr("Can't create directory. Home directory is not writable");
         }
     }
 
@@ -54,7 +53,7 @@ void RequestHistory::init()
     }
 }
 
-bool RequestHistory::connect(const QString &dbName)
+void RequestHistory::connect(const QString &dbName)
 {
     m_database = QSqlDatabase::addDatabase("QSQLITE", dbName);
     m_database.setDatabaseName(dbName);
@@ -63,11 +62,8 @@ bool RequestHistory::connect(const QString &dbName)
 
     if (!m_database.open()) {
         QSqlDatabase::removeDatabase(dbName);
-        qDebug() << "Cant init QSQLITE";
-        return false;
+        throw QObject::tr("Can't init SQLite driver. Plese install SQLite driver or Qt slqlite extension.");
     }
-
-    return true;
 }
 
 /**
