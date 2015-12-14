@@ -22,14 +22,12 @@
 
 class RestClientMainWindow;
 class ResponseWidget;
-class QPlainTextEdit;
 
 class MainPanel
 {
 public:
     MainPanel(RestClientMainWindow* app);
-    ResponseWidget *m_response;
-    QPlainTextEdit *m_errorResponse;
+    ResponseWidget *m_response;    
 };
 
 #endif // MAINPANEL_H

@@ -33,6 +33,7 @@
 #include <QLineEdit>
 #include <QRadioButton>
 #include <QGroupBox>
+#include <QUrl>
 
 RequestDetailsDlg::RequestDetailsDlg(Request* request, QWidget *parent)
     : QDialog(parent)
@@ -88,7 +89,7 @@ RequestDetailsDlg::~RequestDetailsDlg()
 void RequestDetailsDlg::slotSendToBuffer()
 {
     QClipboard *clipboard = QApplication::clipboard();
-    clipboard->setText(m_request->toString().join("/n/n/n"));
+    clipboard->setText(m_request->toString().join("\n\n\n"));
 }
 
 void RequestDetailsDlg::slotSendToGist()

@@ -167,6 +167,9 @@ void ParamDlg::initPredefinedHeaders()
     list << "keep-alive"
          << "Upgrade";
     addHeader("Connection", list);
+
+    m_cName->setCurrentIndex(-1);
+    m_cValue->clear();
 }
 
 void ParamDlg::addHeader(const QString& header, QStringList& values)

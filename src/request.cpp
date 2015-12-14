@@ -21,6 +21,8 @@
 
 #include <QUrlQuery>
 #include <QDebug>
+#include <QJsonDocument>
+#include <QStringList>
 
 Request::Request(const QString& url, const QString& method)
     :m_url(url)
@@ -29,15 +31,13 @@ Request::Request(const QString& url, const QString& method)
 
 QStringList Request::toString()
 {    
-    QString res;
-
-    res = "HTTP Request\n\n";
-    res += m_method + " " + m_url + "\n\n";
+    QString request("HTTP Request\n\n");
+    request.append(QString("%1 %2\n\n").arg(m_method).arg(m_url));
     //Build headers
     QHashIterator<QString, QString> i(m_requestHeaders);
     while (i.hasNext()) {
         i.next();
-        res += i.key() + ": " + i.value() +"\n";
+        request.append(QString("%1: %2\n").arg(i.key()).arg(i.value()));
     }
 
     if (!m_requestParams.isEmpty()) {
@@ -47,52 +47,50 @@ QStringList Request::toString()
             i.next();
             query.addQueryItem(i.key(), i.value());
         }
-
-        res += "Encoded Uri: " + query.query(QUrl::FullyEncoded).toUtf8() + "\n";
-        res += "Decoded Uri: " + query.query(QUrl::FullyDecoded).toUtf8();
+        request.append(QString("Encoded Uri: %1\nDecoded Uri: %2\n")
+                       .arg(query.query(QUrl::FullyEncoded))
+                       .arg(query.query(QUrl::FullyDecoded)));
     }
 
-    res += "\n";
-    QString raw = m_requestRaw.simplified();
+    QString raw = format(m_requestRaw, getRequestContentType());
     if (!raw.isEmpty()) {
-        res += raw + "\n";
+        request.append(raw);
     }
 
     //Build response
-    QString response = "HTTP Response\n\n";
-    response += statusMessage() + "\n";
+    QString response("HTTP Response\n\n");
+    response.append(statusMessage(false)).append("\n");
     if (!m_responseHeaders.isEmpty()) {
         i = m_responseHeaders;
         while (i.hasNext()) {
             i.next();
-            response += i.key() + ": " + i.value() +"\n";
+            response.append(QString("%1: %2\n").arg(i.key()).arg(i.value()));
         }
     }
-    response += "\n\n";
-    QString text = m_response.simplified();
+    response.append("\n\n");
+    QString text = format(m_response, getResponseContentType());
     if (!text.isEmpty()) {
-        response += text + "\n";
+        response.append(text);
     }
 
-    return QStringList() << res << response;
+    return QStringList() << request << response;
 }
 
 QString Request::requestToHtml()
 {
     QString res(style());
-    res += QString("<b>%1</b><br /><br />").arg("HTTP Request");
-    res += QString("<span class='method'>%1</span> %2<br />").arg(m_method).arg(m_url);
+    res.append(QString("<b>%1</b><br /><br />").arg("HTTP Request"));
+    res.append(QString("<span class='method'>%1</span> %2<br />").arg(m_method).arg(m_url));
     //Build headers
     QHashIterator<QString, QString> i(m_requestHeaders);
     while (i.hasNext()) {
         i.next();
-        res += QString("<span class='tagHeader'>%1</span>: %2<br />").arg(i.key()).arg(i.value());
+        res.append(QString("<span class='tagHeader'>%1</span>: %2<br />").arg(i.key()).arg(i.value()));
     }
 
-
-
+    //Build Uri
     if (!m_requestParams.isEmpty()) {
-        res += "<br />";
+        res.append("<br />");
         QUrlQuery query;
         i = m_requestParams;
         while (i.hasNext()) {
@@ -100,25 +98,25 @@ QString Request::requestToHtml()
             query.addQueryItem(i.key(), i.value());
         }
 
-        res += QString("<span class='tagHeader'>%1</span>: %2<br />")
-                .arg(QObject::tr("Encoded Uri"))
-                .arg(query.query(QUrl::FullyEncoded));
-        res += QString("<span class='tagHeader'>%1</span>: %2<br />")
-                .arg(QObject::tr("Decoded Uri"))
-                .arg(query.query(QUrl::FullyDecoded));
+        res.append(QString("<span class='tagHeader'>%1</span>: %2<br />"
+                           "<span class='tagHeader'>%3</span>: %4<br />")
+                   .arg(QObject::tr("Encoded Uri"))
+                   .arg(query.query(QUrl::FullyEncoded))
+                   .arg(QObject::tr("Decoded Uri"))
+                   .arg(query.query(QUrl::FullyDecoded)));
     }
 
-    QString raw = m_requestRaw.simplified();
+    QString raw = format(m_requestRaw, getRequestContentType());
     if (!raw.isEmpty()) {
-        res += "<br />";
-        res += QString("<code>%1</code>").arg(raw);
+        raw.replace(" ", "&nbsp;").replace("\n", "<br />");
+        res.append(QString("<br /><code>%1</code>").arg(raw));
     }
     return res;
 }
 
 QString Request::style()
 {
-    return "<style >"
+    return QString("<style >"
             "  .tagHeader {"
             "    color: #138fd5;"
             "   }"
@@ -128,52 +126,61 @@ QString Request::style()
            "   .status {"
            "    color: #ff2200;"
            "   }"
-            "</style>";
+            "</style>");
 }
 
 QString Request::responseToHtml()
 {
     QString res(style());
-    res += QString("<b>%1</b><br /><br />").arg("HTTP Response");
-
-    res += QString("<span class='%1'>%2</span><br />")
-            .arg((i_responseCode == 200)? "method" : "status")
-            .arg(statusMessage());
+    res.append(QString("<b>%1</b><br /><br />%2<br />")
+               .arg("HTTP Response")
+               .arg(statusMessage()));
 
     QHashIterator<QString, QString> i(m_responseHeaders);
     while (i.hasNext()) {
         i.next();
-        res += QString("<span class='tagHeader'>%1</span>: %2<br />").arg(i.key()).arg(i.value());
+        res.append(QString("<span class='tagHeader'>%1</span>: %2<br />").arg(i.key()).arg(i.value()));
     }
 
-    QString text = m_response.simplified();
+    QString text = format(m_response, getResponseContentType());
     if (!text.isEmpty()) {
-        res += "<br />";
-        res += QString("<code>%1</code>").arg(text);
+        text.replace(" ", "&nbsp;").replace("\n", "<br />");
+        res.append(QString("<br /><code>%1</code>").arg(text));
     }
 
     return res;
 }
 
-QString Request::statusMessage()
+QString Request::statusMessage(bool asHtml)
 {
-    return  QString("%1 %2").arg(i_responseCode).arg(m_message);
+    if (asHtml) {
+        return QString("<span class='%1'>%2 %3</span>")
+                .arg((i_responseCode >= 200 && i_responseCode < 300)? "method" : "status")
+                .arg(i_responseCode)
+                .arg(m_message);
+    } else {
+        return QString("%2 %3")
+                .arg(i_responseCode)
+                .arg(m_message);
+    }
 }
 
 QString Request::responseHeadersAsString()
 {
-    //Supports old version
-    if (!m_responseHeadersString.isEmpty()) {
-        return m_responseHeadersString;
-    } else {
-        QString res;
-        QHashIterator<QString, QString> i(m_responseHeaders);
-        while (i.hasNext()) {
-            i.next();
-            res += "<b>"+i.key() + ":</b> " + i.value() +"<br />";
-        }
-        return res;
+    QString res(style());
+    res.append(statusMessage());
+    res.append("<br />");
+    QHashIterator<QString, QString> i(m_responseHeaders);
+    while (i.hasNext()) {
+        i.next();
+        res.append(QString("<b>%1:</b> %2<br />").arg(i.key()).arg(i.value()));
     }
+
+    if (!m_error.isEmpty()) {
+        res.append(QString("<br /><b>Server Replied:</b> %1").arg(m_error));
+    }
+
+    return res;
 }
 
 QString Request::getGistId()
@@ -200,18 +207,8 @@ QString Request::getRequestContentType()
 QString Request::getResponseContentType()
 {
     QString type = "text";
-    //Support old version
-    if (!m_responseHeadersString.isEmpty()) {
-        int pos = 0;
-
-        if((pos = m_responseHeadersString.indexOf("content-type:", 0, Qt::CaseInsensitive)) != -1) {
-            int end = m_responseHeadersString.indexOf("\n", pos+1);
-            type = m_responseHeadersString.mid(pos, end-pos).trimmed();
-        }
-    } else {
-        if (m_responseHeaders.contains("Content-Type")) {
-            type = m_responseHeaders["Content-Type"];
-        }
+    if (m_responseHeaders.contains("Content-Type")) {
+        type = m_responseHeaders["Content-Type"];
     }
     return type;
 }
@@ -228,5 +225,27 @@ void Request::addResponseHeader(const QString& key, const QString& value)
 void Request::addRequestParam(const QString& key, const QString& value)
 {
     m_requestParams.insert(key, value);
+}
+
+QString Request::format(const QString& text, const QString& type)
+{
+    QString s = text.simplified();
+    if( type.indexOf("json", 0, Qt::CaseInsensitive) != -1) {
+        s = parseJson(s);
+    }
+
+    return s;
+}
+
+QString Request::parseJson(const QString &json)
+{
+    QString s = json;
+    QJsonParseError *error = new QJsonParseError;
+    QJsonDocument doc = QJsonDocument::fromJson(s.toUtf8(), error);
+    if (error->error == QJsonParseError::NoError) {
+        s = doc.toJson(QJsonDocument::Indented);
+    }
+    delete error;
+    return s;
 }
 

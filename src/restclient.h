@@ -31,6 +31,7 @@ class RestClient : public QObject
     Q_OBJECT
 public:
     explicit RestClient(QObject *parent = 0);
+    ~RestClient();
     void abort();
     void sendRequest(Request *request);
 

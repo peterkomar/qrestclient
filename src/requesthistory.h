@@ -49,13 +49,15 @@ public:
     Request* getRequest(int requestId);
 
 private:
-    bool connect(const QString& name);
+    void connect(const QString& name);
     void createDataBase();
     void addRequestPairs(int requestId, QSqlQuery *query, const QString& name,  const QHash<QString, QString>& pair);
 
     //Migration functions block
     void migrateTo2();
     //End migration functions block
+
+    void query(QSqlQuery* query, const QString& string = "");
 
     QSqlDatabase m_database;
 };

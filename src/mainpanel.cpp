@@ -21,24 +21,11 @@
 #include "restclientmainwindow.h"
 #include "responsewidget.h"
 
-#include <QPlainTextEdit>
 #include <QVBoxLayout>
 
 MainPanel::MainPanel(RestClientMainWindow* app)
 {
     m_response = new ResponseWidget(app);
-    m_response->setMinimumSize(500, 205);
-
-    m_errorResponse = new QPlainTextEdit;
-    m_errorResponse->setPlainText(QObject::tr(""));
-    m_errorResponse->setReadOnly(true);
-    m_errorResponse->setMinimumSize(500, 40);
-    m_errorResponse->setMaximumHeight(40);
-
-    QWidget *main = new QWidget;
-    QVBoxLayout *pvLayout = new QVBoxLayout(main);
-    pvLayout->addWidget(m_response);
-    pvLayout->addWidget(m_errorResponse);
-    app->setCentralWidget(main);
+    app->setCentralWidget(m_response);
 }
 

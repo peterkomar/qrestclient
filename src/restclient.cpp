@@ -25,11 +25,19 @@
 #include <QUrlQuery>
 #include <QUrl>
 #include <QNetworkRequest>
+#include <QSslConfiguration>
 
 RestClient::RestClient(QObject *parent)
     : QObject(parent)
     ,m_reply(0)
 {
+}
+
+RestClient::~RestClient()
+{
+    m_request = 0;
+    m_reply = 0;
+    m_time = 0;
 }
 
 void RestClient::abort()
@@ -114,7 +122,6 @@ void RestClient::parseResponseHeaders()
         m_request->addResponseHeader(headers.at(i), m_reply->rawHeader(headers.at(i)));
     }
     m_request->addResponseHeader("Execution-Time", QString::number(m_time->msecsTo(time))+" ms");
-    delete m_time;
 }
 
 void RestClient::slotFinishRequest()
@@ -159,11 +166,9 @@ void RestClient::slotReplyError(QNetworkReply::NetworkError error)
     QVariant statusCode = m_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
     QVariant reason = m_reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute);
 
+    m_request->setError(error_string);
     m_request->setMessage(reason.toString());
     m_request->setResponseCode(statusCode.toInt());
-    QString res = m_request->response();
-    res += "\n\n" + error_string;
-    m_request->setResponse(res);
 
     parseResponseHeaders();
     releaseReplyResources();
@@ -179,5 +184,6 @@ void RestClient::releaseReplyResources()
     QNetworkAccessManager *manager = m_reply->manager();
     m_reply->deleteLater();
     manager->deleteLater();
+    delete m_time;
 }
 

@@ -36,7 +36,7 @@ public:
     QString getResponseContentType();
     QString responseHeadersAsString();
     QString getRequestContentType();
-    QString statusMessage();
+    QString statusMessage(bool asHtml = true);
 
     QString getGistId();
     void setGistId(const QString& id);
@@ -50,6 +50,9 @@ public:
 
     QString message() const { return m_message; }
     void setMessage(const QString& message) { m_message = message; }
+
+    QString error() const { return m_error; }
+    void setError(const QString& error) { m_error = error; }
 
     int responseCode() { return i_responseCode; }
     void setResponseCode(int code) { i_responseCode = code; }
@@ -66,24 +69,21 @@ public:
     void addRequestParam(const QString& key, const QString& value);
     QHash<QString, QString> requestParams() const { return m_requestParams; }
 
-    //Support old version
-    void setResponseHeadersString(const QString& headers) { m_responseHeadersString = headers; }
-
 private:
     QString m_url;
     QString m_method;
     QString m_response;
     QString m_message;
+    QString m_error;
     QHash<QString, QString> m_requestHeaders;
     QHash<QString, QString> m_requestParams;
     QString m_requestRaw;
     QHash<QString, QString> m_responseHeaders;
     int i_responseCode;
 
-    //For support old versions
-    QString m_responseHeadersString;
-
     QString style();
+    QString format(const QString& text, const QString& type);
+    QString parseJson(const QString& );
 };
 
 #endif // REQUEST_H
