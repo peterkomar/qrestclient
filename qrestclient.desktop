@@ -1,0 +1,13 @@
+[Desktop Entry]
+X-SuSE-translate=true
+Type=Application
+Exec=qrestclient
+Name=QRestClient
+GenericName=REST client for developers 
+X-KDE-StartupNotify=true
+Icon=qrestclient
+Terminal=false
+Categories=Development;Utilities;
+InitialPreference=9
+StartupNotify=false
+Encoding=UTF-8
