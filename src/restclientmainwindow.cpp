@@ -418,26 +418,17 @@ void RestClientMainWindow::slotHideHistoryFilter()
     loadHistory();
 }
 
-void RestClientMainWindow::slotViewJson()
+void RestClientMainWindow::slotViewMode()
 {
-    ResponseWidget::type type = m_mainPanel->m_response->render(ResponseWidget::TYPE_JSON);
+    if(QAction *action = qobject_cast<QAction *>(sender())) {
+        ResponseWidget::type typeOrigin = (ResponseWidget::type)action->property("type").toInt();
+        ResponseWidget::type type = m_mainPanel->m_response->render(typeOrigin);
 
-    if( type != ResponseWidget::TYPE_JSON ) {
-        QMessageBox::critical(this, tr("Error parese"), tr("Error parsing JSON"));
+        if (typeOrigin == ResponseWidget::TYPE_JSON && typeOrigin != type) {
+            QMessageBox::critical(this, tr("Error parese"), tr("Error parsing JSON"));
+        }
         slotNotifyMenuView(type);
     }
-}
-
-void RestClientMainWindow::slotViewText()
-{
-    ResponseWidget::type type = m_mainPanel->m_response->render(ResponseWidget::TYPE_TEXT);
-    slotNotifyMenuView(type);
-}
-
-void RestClientMainWindow::slotViewCsv()
-{
-    ResponseWidget::type type = m_mainPanel->m_response->render(ResponseWidget::TYPE_CSV);
-    slotNotifyMenuView(type);
 }
 
 void RestClientMainWindow::slotNotifyMenuView(int pos)
@@ -446,6 +437,11 @@ void RestClientMainWindow::slotNotifyMenuView(int pos)
     case ResponseWidget::TYPE_TEXT: m_menu->m_textView->setChecked(true);
         break;
     case ResponseWidget::TYPE_JSON: m_menu->m_jsonView->setChecked(true);
+        break;
+    case ResponseWidget::TYPE_CSV: m_menu->m_csvView->setChecked(true);
+        break;
+    case ResponseWidget::TYPE_HTML: m_menu->m_htmlView->setChecked(true);
+        break;
     default:
         break;
     }

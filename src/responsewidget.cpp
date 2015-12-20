@@ -23,22 +23,25 @@
 #include "qcsvview.h"
 
 #include <QTextEdit>
-#include <QDebug>
+#include <QTextBrowser>
 
 ResponseWidget::ResponseWidget(QWidget *parent) :
     QStackedWidget(parent)
 {
     m_textView = new QTextEdit;
     m_textView->setReadOnly(true);
-    addWidget(m_textView);
+    insertWidget(TYPE_TEXT, m_textView);
+
+    m_htmlView = new QTextBrowser;
+    insertWidget(TYPE_HTML, m_htmlView);
 
     m_jsonView = new QJsonView;
-    addWidget(m_jsonView);
+    insertWidget(TYPE_JSON, m_jsonView);
 
     m_csvView = new QCsvView;
-    addWidget(m_csvView);
+    insertWidget(TYPE_CSV, m_csvView);
 
-    setCurrentIndex(0);
+    setCurrentIndex(TYPE_TEXT);
 
     m_text = "";
 }
@@ -72,6 +75,9 @@ ResponseWidget::type ResponseWidget::render(type typeResponse)
             case TYPE_CSV:  index = TYPE_CSV;
                             m_csvView->setText(body);
                             break;
+            case TYPE_HTML: index = TYPE_HTML;
+                            m_htmlView->setHtml(body);
+                            break;
 
         }
 
@@ -80,7 +86,7 @@ ResponseWidget::type ResponseWidget::render(type typeResponse)
         m_textView->setPlainText(body);
     }
 
-    setCurrentIndex(index);
+    setCurrentIndex((int)index);
 
     return index;
 }

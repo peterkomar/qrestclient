@@ -59,9 +59,8 @@ public slots:
     void slotHideHistoryFilter();
     void slotRequestDetails();
 
-    void slotViewJson();
-    void slotViewText();
-    void slotViewCsv();
+    void slotViewMode();
+
     void slotAbout();
 
     void slotNotifyMenuView(int pos);
