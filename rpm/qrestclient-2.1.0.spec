@@ -16,14 +16,14 @@
 #
 
 Name:           qrestclient
-Version:        2.0.1
+Version:        2.1.0
 Release:        1
 License:        GPL
 Summary:        Rest client
 Url:            https://github.com/peterkomar/qrestclient
 Vendor:         Peter Komar
 Group:          Development/Networking
-Source:         qrestclient-2.0.1.tar.gz
+Source:         qrestclient-2.1.0.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
@@ -73,6 +73,8 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/icons/hicolor/256x256/apps/qrestclient.png
 /usr/share/icons/hicolor/512x512/apps/qrestclient.png
 %changelog
+* Thu Dec 23 2015 Peter Komar <peter0komar@gmail.com>
+- Added HTML preview. Fixed view modes
 * Thu Dec 2 2015 Peter Komar <peter0komar@gmail.com>
 - Builded app for openSUSE Leap 42.1
 

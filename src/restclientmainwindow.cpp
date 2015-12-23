@@ -466,5 +466,5 @@ void RestClientMainWindow::slotAbout()
                        "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>"
                        "<br/><br/><b>License:</b> GPL v2"
                        "<br/> 2007 - " + QDateTime::currentDateTime().toString("yyyy") +
-                       "<br/><br/><b>Build </b>: 2.0." + QString::number(QDateTime::currentMSecsSinceEpoch()));
+                       "<br/><br/><b>Build </b>: 2.1." + QString::number(QDateTime::currentMSecsSinceEpoch()));
 }
