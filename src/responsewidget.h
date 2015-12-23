@@ -26,6 +26,7 @@
 class QTextEdit;
 class QJsonView;
 class QCsvView;
+class QTextBrowser;
 
 class ResponseWidget : public QStackedWidget
 {
@@ -36,6 +37,7 @@ public:
       TYPE_TEXT = 0,
       TYPE_JSON,
       TYPE_CSV,
+      TYPE_HTML,
     };
 
     explicit ResponseWidget(QWidget *parent = 0);
@@ -50,6 +52,7 @@ private:
     QTextEdit *m_textView;
     QJsonView *m_jsonView;
     QCsvView  *m_csvView;
+    QTextBrowser *m_htmlView;
 
     QString m_text;
 };

@@ -19,6 +19,7 @@
  ***************************************************************************/
 #include "menu.h"
 #include "restclientmainwindow.h"
+#include "responsewidget.h"
 
 #include <QMenuBar>
 #include <QActionGroup>
@@ -31,25 +32,35 @@ Menu::Menu(RestClientMainWindow* app)
     m_jsonView = new QAction("Json", app);
     m_textView = new QAction("Text", app);
     m_csvView  = new QAction("CSV", app);
+    m_htmlView = new QAction("Html", app);
 
     QActionGroup *viewGroup = new QActionGroup(app);
     viewGroup->addAction(m_jsonView);
     viewGroup->addAction(m_textView);
     viewGroup->addAction(m_csvView);
+    viewGroup->addAction(m_htmlView);
 
     m_jsonView->setCheckable(true);
     m_textView->setCheckable(true);
     m_csvView->setCheckable(true);
+    m_htmlView->setCheckable(true);
 
     m_textView->setChecked(true);
 
     view->addAction(m_jsonView);
     view->addAction(m_textView);
     view->addAction(m_csvView);
+    view->addAction(m_htmlView);
 
-    QObject::connect(m_jsonView, SIGNAL(triggered()), app, SLOT(slotViewJson()));
-    QObject::connect(m_textView, SIGNAL(triggered()), app, SLOT(slotViewText()));
-    QObject::connect(m_csvView,  SIGNAL(triggered()), app, SLOT(slotViewCsv()));
+    m_jsonView->setProperty("type", ResponseWidget::TYPE_JSON);
+    m_textView->setProperty("type", ResponseWidget::TYPE_TEXT);
+    m_csvView->setProperty("type", ResponseWidget::TYPE_CSV);
+    m_htmlView->setProperty("type", ResponseWidget::TYPE_HTML);
+
+    QObject::connect(m_jsonView, SIGNAL(triggered()), app, SLOT(slotViewMode()));
+    QObject::connect(m_textView, SIGNAL(triggered()), app, SLOT(slotViewMode()));
+    QObject::connect(m_csvView,  SIGNAL(triggered()), app, SLOT(slotViewMode()));
+    QObject::connect(m_htmlView, SIGNAL(triggered()), app, SLOT(slotViewMode()));
 
     QAction *a = new QAction(QObject::tr("About"), app);
     QMenu *m = app->menuBar()->addMenu(QObject::tr("Help"));

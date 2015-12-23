@@ -50,10 +50,10 @@ make %{?_smp_mflags}
 %install
 mkdir -p %{buildroot}/usr/bin
 mkdir -p %{buildroot}/usr/share/applications
-mkdir -p %{buildroot}/usr/share/icons
+mkdir -p %{buildroot}/usr/share/icons/hicolor
 cp bin/qrestclient %{buildroot}/usr/bin
-cp -R desktop/qrestclient.desktop %{buildroot}/usr/share/applications
-cp -R -f desktop/icons %{buildroot}/usr/share
+cp -R qrestclient.desktop %{buildroot}/usr/share/applications
+cp -R -f icons/* %{buildroot}/usr/share/icons/hicolor
 %clean
 rm -rf $RPM_BUILD_ROOT
 %post

@@ -31,6 +31,7 @@ public:
     QAction *m_jsonView;
     QAction *m_textView;
     QAction *m_csvView;
+    QAction *m_htmlView;
 };
 
 #endif // MENU_H

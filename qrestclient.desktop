@@ -9,3 +9,5 @@ Icon=qrestclient
 Terminal=false
 Categories=Development;Utilities;
 InitialPreference=9
+StartupNotify=false
+Encoding=UTF-8
