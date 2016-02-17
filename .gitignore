@@ -3,4 +3,4 @@ Makefile
 bin/*
 src/build/*
 src/Makefile
-.DS_Store
+**/.DS_Store
