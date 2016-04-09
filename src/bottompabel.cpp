@@ -54,12 +54,24 @@ BottomPabel::BottomPabel(RestClientMainWindow* app)
     filterAction->setShortcut(QKeySequence::Find);
     QObject::connect(filterAction, SIGNAL(triggered()), app, SLOT(slotShowHistoryFilter()));
 
-    m_historyWidget->addContextMenuItem(infoAction);
+    QAction *groupAction = new QAction(QObject::tr("Group"), app);
+    groupAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_G));
+    QObject::connect(groupAction, SIGNAL(triggered()), app, SLOT(slotGroup()));
+    groupAction->setVisible(false);
+
+    QAction *unGroupAction = new QAction(QObject::tr("Ungroup"), app);
+    unGroupAction->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_G));
+    QObject::connect(unGroupAction, SIGNAL(triggered()), app, SLOT(slotUnGroup()));
+    unGroupAction->setVisible(false);
+
+    m_historyWidget->addContextMenuItem(infoAction, "info");
     m_historyWidget->addContextMenuSeparator();
-    m_historyWidget->addContextMenuItem(removeAction);
-    m_historyWidget->addContextMenuItem(clearAction);
+    m_historyWidget->addContextMenuItem(removeAction, "remove");
+    m_historyWidget->addContextMenuItem(clearAction, "clear");
     m_historyWidget->addContextMenuSeparator();
-    m_historyWidget->addContextMenuItem(filterAction);
+    m_historyWidget->addContextMenuItem(filterAction, "filter");
+    m_historyWidget->addContextMenuItem(groupAction, "group");
+    m_historyWidget->addContextMenuItem(unGroupAction, "ungroup");
 
     QGridLayout *gridLayout = new QGridLayout;
     gridLayout->addWidget(m_filterEdit, 0, 1);

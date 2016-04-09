@@ -69,6 +69,9 @@ public:
     void addRequestParam(const QString& key, const QString& value);
     QHash<QString, QString> requestParams() const { return m_requestParams; }
 
+    void setGroupId(int groupId) { i_group_id = groupId; }
+    int groupId() { return i_group_id; }
+
 private:
     QString m_url;
     QString m_method;
@@ -80,6 +83,7 @@ private:
     QString m_requestRaw;
     QHash<QString, QString> m_responseHeaders;
     int i_responseCode;
+    int i_group_id;
 
     QString style();
     QString format(const QString& text, const QString& type);

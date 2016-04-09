@@ -27,6 +27,7 @@
 Request::Request(const QString& url, const QString& method)
     :m_url(url)
     ,m_method(method)
+    ,i_group_id(0)
 {}
 
 QStringList Request::toString()

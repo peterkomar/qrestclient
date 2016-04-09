@@ -22,6 +22,7 @@
 #define RESTHISTORYWIDGET_H
 
 #include <QTreeWidget>
+#include <QMap>
 
 class QMenu;
 
@@ -29,14 +30,17 @@ class RestHistoryWidget : public QTreeWidget
 {
     Q_OBJECT
 public:
+    enum Type { TYPE_GROUP, TYPE_ITEM };
     explicit RestHistoryWidget(QWidget *parent = 0);
 
-    void addContextMenuItem(QAction *action);
+    void addContextMenuItem(QAction *action, const QString& name);
     void addContextMenuSeparator();
 
 protected:
      void mousePressEvent ( QMouseEvent * event );
      QMenu *menu;
+
+     QMap<QString, QAction*> m_actions;
 };
 
 #endif // RESTHISTORYWIDGET_H

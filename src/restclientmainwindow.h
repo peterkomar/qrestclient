@@ -58,6 +58,8 @@ public slots:
     void slotShowHistoryFilter();
     void slotHideHistoryFilter();
     void slotRequestDetails();
+    void slotGroup();
+    void slotUnGroup();
 
     void slotViewMode();
 
