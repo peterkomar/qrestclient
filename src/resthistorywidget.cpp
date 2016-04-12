@@ -36,7 +36,7 @@ RestHistoryWidget::RestHistoryWidget(QWidget *parent) :
     setColumnWidth(2,500);
 
     setAlternatingRowColors(true);
-    setRootIsDecorated(false);
+    setRootIsDecorated(true);
     setUniformRowHeights(true);
     setAllColumnsShowFocus(true);
     header()->setCascadingSectionResizes(true);
@@ -47,9 +47,10 @@ RestHistoryWidget::RestHistoryWidget(QWidget *parent) :
     menu = new QMenu;
 }
 
-void RestHistoryWidget::addContextMenuItem(QAction *action)
+void RestHistoryWidget::addContextMenuItem(QAction *action, const QString& name)
 {
     menu->addAction(action);
+    m_actions.insert(name, action);
 }
 
 void RestHistoryWidget::addContextMenuSeparator()
@@ -61,7 +62,33 @@ void RestHistoryWidget::mousePressEvent(QMouseEvent *event)
 {
     if( topLevelItemCount() != 0 ) {
       if(event->button() == Qt::RightButton) {
-        menu->exec(event->globalPos());
+          QTreeWidgetItem *item = currentItem();
+          if (item) {
+              //Hide items for group
+              if (item->type() == RestHistoryWidget::TYPE_GROUP) {
+                  m_actions.value("info")->setVisible(false);
+                  m_actions.value("remove")->setVisible(false);
+                  m_actions.value("clear")->setVisible(false);
+                  m_actions.value("group")->setVisible(false);
+                  m_actions.value("ungroup")->setVisible(false);
+              } else {
+                  m_actions.value("info")->setVisible(true);
+                  m_actions.value("remove")->setVisible(true);
+                  m_actions.value("clear")->setVisible(true);
+                  m_actions.value("group")->setVisible(true);
+                  m_actions.value("ungroup")->setVisible(true);
+
+                  //Disable/Enable for groupped and not grouped items
+                  if (item->parent()) {
+                      m_actions.value("group")->setVisible(false);
+                      m_actions.value("ungroup")->setVisible(true);
+                  } else {
+                      m_actions.value("group")->setVisible(true);
+                      m_actions.value("ungroup")->setVisible(false);
+                  }
+              }
+              menu->exec(event->globalPos());
+          }
       }
     }
 

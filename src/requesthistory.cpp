@@ -24,6 +24,7 @@
 #include <QMessageBox>
 
 RequestHistory::RequestHistory()
+    :version("2.2.1")
 {
 }
 
@@ -50,6 +51,7 @@ void RequestHistory::init()
         createDataBase();
     } else {
         migrateTo2();
+        migrateTo3();
     }
 }
 
@@ -147,6 +149,67 @@ void RequestHistory::migrateTo2()
     delete q;
 }
 
+/**
+* Migration function will be removed later
+*/
+void RequestHistory::migrateTo3()
+{
+    QStringList tables = m_database.tables();
+    if (tables.contains("groups")) {
+        return;
+    }
+
+    QSqlQuery *q = new QSqlQuery(m_database);
+    q->prepare("UPDATE settings SET value = :value WHERE name = :name");
+    q->bindValue(":name", "ver");
+    q->bindValue(":value", version);
+    query(q);
+
+    //Migrate requests
+    query(q, "ALTER TABLE requests RENAME TO requests_old");
+    query(q, "CREATE TABLE requests ("
+                    "id int,"
+                    "group_id int,"
+                    "date datetime,"
+                    "code int,"//response code
+                    "type varchar,"//method of request GET POST and etc
+                    "url varchar,"
+                    "response mediumtext,"
+                    "error varchar,"
+                    "message varchar,"
+                    "gist_id varchar"
+        ")");
+
+    query(q, "SELECT * FROM requests_old");
+    QSqlQuery *q2 = new QSqlQuery(m_database);
+    while (q->next()) {
+        q2->prepare(""
+         "INSERT INTO requests (id, group_id, date, code, type, url, response, message, gist_id)"
+         " VALUES (:id, :group_id, :date, :code, :type, :url, :response, :message, :gist_id)"
+        );
+        q2->bindValue(":id", q->value("id").toInt());
+        q2->bindValue(":group_id", 0);
+        q2->bindValue(":date", q->value("date").toString());
+        q2->bindValue(":code", q->value("code").toInt());
+        q2->bindValue(":type", q->value("type").toString());
+        q2->bindValue(":url", q->value("url").toString());
+        q2->bindValue(":response", q->value("response").toString());
+        q2->bindValue(":message", q->value("error").toString());
+        q2->bindValue(":gist_id", q->value("error").toString());
+        query(q2);
+        q2->clear();
+    }
+
+    query(q, "CREATE TABLE groups ("
+                    "id int,"
+                    "name varchar"
+             ")"
+    );
+
+    delete q2;
+    delete q;
+}
+
 void RequestHistory::createDataBase()
 {
     QSqlQuery *q = new QSqlQuery(m_database);
@@ -186,6 +249,10 @@ void RequestHistory::createDataBase()
     << "CREATE TABLE settings ("
                 "name varchar,"
                 "value varchar"
+    ")"
+     << "CREATE TABLE groups ("
+                "id int,"
+                "name varchar"
     ")";
 
     QStringList::const_iterator constIterator;
@@ -198,34 +265,24 @@ void RequestHistory::createDataBase()
      " VALUES (:name, :value)"
     );
     q->bindValue(":name", "ver");
-    q->bindValue(":value", "2.0.1");
+    q->bindValue(":value", version);
     query(q);
 }
 
 void RequestHistory::addRequest(Request *request)
 {    
-    QSqlQuery q(m_database);
-    if( !q.exec("SELECT max(id) FROM requests") ) {
-        qDebug() << "Error execution query: " << q.lastQuery() << " Error: " << q.lastError();
-        throw "Error execution query";
-    }
-
-    int index = -1;
-    if( q.first() ) {
-      index = q.value(0).toInt();
-    }
-
-    ++index;
+    int index = lastIncrementId("requests");
 
     m_database.transaction();
     QSqlQuery *query = new QSqlQuery(m_database);
 
     bool result = true;
     query->prepare(""
-     "INSERT INTO requests (id, date, code, type, url, response, error, message)"
-     " VALUES (:id, :date, :code, :type, :url, :response, :error, :message)"
+     "INSERT INTO requests (id, group_id, date, code, type, url, response, error, message)"
+     " VALUES (:id, :group_id, :date, :code, :type, :url, :response, :error, :message)"
     );
     query->bindValue(":id", index);
+    query->bindValue(":group_id", request->groupId());
     query->bindValue(":date", QDateTime::currentDateTime().toString());
     query->bindValue(":code", request->responseCode());
     query->bindValue(":type", request->method());
@@ -284,6 +341,96 @@ void RequestHistory::addRequestPairs(int requestId, QSqlQuery *query, const QStr
     }
 }
 
+int RequestHistory::lastIncrementId(const QString& table)
+{
+    QSqlQuery *q = new QSqlQuery(m_database);
+    if( !q->exec("SELECT max(id) FROM " + table) ) {
+        qDebug() << "Error execution query: " << q->lastQuery() << " Error: " << q->lastError();
+        throw "Error execution query";
+    }
+
+    int index = 0;
+    if( q->first() ) {
+      index = q->value(0).toInt();
+    }
+    return ++index;
+}
+
+void RequestHistory::groupHistory(const QString& name, const QVector<int> requestIds)
+{
+    QSqlQuery *q = new QSqlQuery(m_database);
+    q->prepare("SELECT id FROM groups WHERE name = :name");
+    q->bindValue(":name", name);
+    query(q);
+    int index = 0;
+    if( q->first() ) {
+        index = q->value(0).toInt();
+    } else {
+        index = lastIncrementId("groups");
+        q->clear();
+        q->prepare(""
+         "INSERT INTO groups (id, name)"
+         " VALUES (:id, :name)"
+        );
+        q->bindValue(":id", index);
+        q->bindValue(":name", name);
+        query(q);
+    }
+
+    QString ids;
+    for (int i = 0; i < requestIds.size(); ++i) {
+        ids += QString::number(requestIds.at(i)) + ", ";
+    }
+    ids = ids.remove(ids.length()-2, 2);
+
+    q->clear();
+    q->prepare(QString("UPDATE requests SET group_id = :group_id WHERE id IN (%1)").arg(ids));
+    q->bindValue(":group_id", index);
+    query(q);
+    delete q;
+}
+
+void RequestHistory::unGroupHistory(const QVector<int> requestIds)
+{
+    QSqlQuery *q = new QSqlQuery(m_database);
+
+    QString ids;
+    for (int i = 0; i < requestIds.size(); ++i) {
+        ids += QString::number(requestIds.at(i)) + ", ";
+    }
+    ids = ids.remove(ids.length()-2, 2);
+
+    //Get all group ids for all selected requests ids
+    q->prepare(QString("SELECT group_id FROM requests WHERE id IN (%1) GROUP BY group_id").arg(ids));
+    query(q);
+    QVector<int> groupIds;
+    while (q->next()) {
+        groupIds.append(q->value("group_id").toInt());
+    }
+    q->clear();
+
+    //Ungroup all selected requests
+    q->prepare(QString("UPDATE requests SET group_id = 0 WHERE id IN (%1)").arg(ids));
+    query(q);
+    q->clear();
+
+    //Delete all groups which don't have requests
+    for (int i = 0; i < groupIds.size(); ++i) {
+        q->prepare("SELECT count(*) as cnt FROM requests WHERE group_id = :group_id");
+        q->bindValue(":group_id", groupIds.at(i));
+        query(q);
+        if (q->first() && q->value("cnt").toInt() == 0) {
+            q->clear();
+            q->prepare("DELETE FROM groups WHERE id = :id");
+            q->bindValue(":id", groupIds.at(i));
+            query(q);
+        }
+        q->clear();
+    }
+    delete q;
+}
+
+//TODO:  Add checking if group of deleted item doesn't have any other requests and remove it
 bool RequestHistory::deleteHistory(const QVector<int> requestIds)
 {
     m_database.transaction();
@@ -326,18 +473,18 @@ bool RequestHistory::deleteHistory(const QVector<int> requestIds)
 
 QSqlQuery* RequestHistory::getHistory(const QString& filter)
 {
-    QString order = "ORDER By id DESC";
+    QString order = "ORDER By r.id DESC";
     QString where = "";
     if (!filter.isEmpty()) {
-        where = QString("WHERE id ='%1' "
-                        "OR date LIKE '%%1%' "
-                        "OR code = '%1' "
-                        "OR type LIKE '%1' "
-                        "OR url LIKE '%%1%'").arg(filter);
+        where = QString("WHERE r.id ='%1' "
+                        "OR r.date LIKE '%%1%' "
+                        "OR r.code = '%1' "
+                        "OR r.type LIKE '%1' "
+                        "OR r.url LIKE '%%1%'").arg(filter);
     }
 
     QSqlQuery *q = new QSqlQuery(m_database);
-    query(q, QString("SELECT * FROM requests %1 %2").arg(where).arg(order));
+    query(q, QString("SELECT r.*, g.name as group_name FROM requests AS r LEFT JOIN groups AS g ON g.id = r.group_id %1 %2").arg(where).arg(order));
     return q;
 }
 

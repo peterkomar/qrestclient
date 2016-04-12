@@ -43,6 +43,7 @@
 #include <QComboBox>
 #include <QTextEdit>
 #include <QAction>
+#include <QInputDialog>
 
 RestClientMainWindow::RestClientMainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -246,15 +247,33 @@ void RestClientMainWindow::loadHistory(const QString& filter)
         return;
     }
 
+    QMap<int, QTreeWidgetItem*> groups;
+
     QSqlQuery *q = m_history->getHistory(filter);
     m_bottomPanel->m_historyWidget->clear();
     while (q->next()) {
-        QTreeWidgetItem *item  = new QTreeWidgetItem(m_bottomPanel->m_historyWidget);
-        item->setText(0, q->value(0).toString());
-        item->setText(1, q->value(3).toString());
-        item->setText(2, q->value(4).toString());
-        item->setText(3, q->value(2).toString());
-        item->setText(4, q->value(1).toString());
+        QTreeWidgetItem *parent = 0;
+        QTreeWidgetItem *item = 0;
+        int groupId = q->value("group_id").toInt();
+        if (groupId > 0) {
+            if (groups.contains(groupId)) {
+                parent = groups.value(groupId);
+            } else {
+                parent  = new QTreeWidgetItem(m_bottomPanel->m_historyWidget, RestHistoryWidget::TYPE_GROUP);
+                parent->setText(0, q->value("group_name").toString());
+                groups.insert(groupId, parent);
+            }
+            item  = new QTreeWidgetItem(parent, RestHistoryWidget::TYPE_ITEM);
+            parent->setExpanded(true);
+        } else {
+            item  = new QTreeWidgetItem(m_bottomPanel->m_historyWidget, RestHistoryWidget::TYPE_ITEM);
+        }
+
+        item->setText(0, q->value("id").toString());
+        item->setText(1, q->value("type").toString());
+        item->setText(2, q->value("url").toString());
+        item->setText(3, q->value("code").toString());
+        item->setText(4, q->value("date").toString());        
     }
     delete q;
 }
@@ -283,7 +302,7 @@ void RestClientMainWindow::loadPairs(const QHash<QString, QString>& pair, Params
 
 void RestClientMainWindow::slotHistoryLoad(QTreeWidgetItem *item)
 {
-    if (!m_history) {
+    if (!m_history || item->type() == RestHistoryWidget::TYPE_GROUP) {
         return;
     }
 
@@ -329,6 +348,13 @@ void RestClientMainWindow::slotRequestDetails()
     }
 
     QTreeWidgetItem *item = list.first();
+    /*
+     * Can't show details of group
+     **/
+    if (item->type() == RestHistoryWidget::TYPE_GROUP) {
+        return;
+    }
+
     Request* request = m_history->getRequest(item->text(0).toInt());
     QString gist = request->getGistId();
 
@@ -370,13 +396,18 @@ void RestClientMainWindow::clearItems(QList<QTreeWidgetItem *>& items)
 
     QVector<int> ids;
     for (int i = 0; i < items.size(); ++i) {
-        ids << ((QTreeWidgetItem *)items.at(i))->text(0).toInt();
+        QTreeWidgetItem *item = items.at(i);
+        if (item->type() == RestHistoryWidget::TYPE_ITEM) {
+            ids << item->text(0).toInt();
+        } else {
+            items.removeAt(i);
+        }
     }
 
     if (m_history->deleteHistory(ids)) {
         qDeleteAll(items);
     } else {
-        QMessageBox::critical(this, tr("Error delete"), tr("Can't delete item(s) beacuses database"));
+        QMessageBox::critical(this, tr("Error delete"), tr("Can't delete item(s) becauses database"));
     }
 }
 
@@ -392,7 +423,14 @@ void RestClientMainWindow::slotHistoryClear()
     int countItems = m_bottomPanel->m_historyWidget->topLevelItemCount();
     QList<QTreeWidgetItem *> list;
     for( int i=0; i < countItems; i++ ) {
-        list.append(m_bottomPanel->m_historyWidget->topLevelItem(i));
+        QTreeWidgetItem* item = m_bottomPanel->m_historyWidget->topLevelItem(i);
+        if (item->type() == RestHistoryWidget::TYPE_GROUP) {
+            for (int j=0; j<item->childCount(); j++) {
+                list.append(item->child(j));
+            }
+        } else {
+            list.append(m_bottomPanel->m_historyWidget->topLevelItem(i));
+        }
     }
     clearItems(list);
     loadHistory();
@@ -415,6 +453,53 @@ void RestClientMainWindow::slotShowHistoryFilter()
 void RestClientMainWindow::slotHideHistoryFilter()
 {
     m_bottomPanel->m_filterEdit->setVisible(false);
+    loadHistory();
+}
+
+void RestClientMainWindow::slotGroup()
+{
+    if (!m_history) {
+        return;
+    }
+
+    QString name = QInputDialog::getText(this, tr("Group"), tr("Group Name:"));
+    if (name.isEmpty()) {
+        return;
+    }
+
+    QList<QTreeWidgetItem*> items = m_bottomPanel->m_historyWidget->selectedItems();
+    if (items.isEmpty()) {
+        return;
+    }
+
+    QVector<int> ids;
+    for (int i = 0; i < items.size(); ++i) {
+        QTreeWidgetItem *item = items.at(i);
+        if (item->type() == RestHistoryWidget::TYPE_ITEM) {
+            ids << ((QTreeWidgetItem *)items.at(i))->text(0).toInt();
+        }
+    }
+
+    m_history->groupHistory(name, ids);
+    loadHistory();
+}
+
+void RestClientMainWindow::slotUnGroup()
+{
+    QList<QTreeWidgetItem*> items = m_bottomPanel->m_historyWidget->selectedItems();
+    if (items.isEmpty()) {
+        return;
+    }
+
+    QVector<int> ids;
+    for (int i = 0; i < items.size(); ++i) {
+        QTreeWidgetItem *item = items.at(i);
+        if (item->type() == RestHistoryWidget::TYPE_ITEM) {
+            ids << ((QTreeWidgetItem *)items.at(i))->text(0).toInt();
+        }
+    }
+
+    m_history->unGroupHistory(ids);
     loadHistory();
 }
 
@@ -466,5 +551,5 @@ void RestClientMainWindow::slotAbout()
                        "Author <a href=\"http://peter_komar.byethost17.com/\">Peter Komar</a>"
                        "<br/><br/><b>License:</b> GPL v2"
                        "<br/> 2007 - " + QDateTime::currentDateTime().toString("yyyy") +
-                       "<br/><br/><b>Build </b>: 2.1." + QString::number(QDateTime::currentMSecsSinceEpoch()));
+                       "<br/><br/><b>Build </b>: 2.3." + QString::number(QDateTime::currentMSecsSinceEpoch()));
 }

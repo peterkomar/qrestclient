@@ -44,6 +44,8 @@ public:
 
     void addRequest(Request *request);
     void setGistId(int requestid, const QString& gistId);
+    void groupHistory(const QString& name, const QVector<int> requestIds);
+    void unGroupHistory(const QVector<int> requestIds);
     bool deleteHistory(const QVector<int> requestIds);
     QSqlQuery* getHistory(const QString& filter);
     Request* getRequest(int requestId);
@@ -55,11 +57,14 @@ private:
 
     //Migration functions block
     void migrateTo2();
+    void migrateTo3();
     //End migration functions block
 
     void query(QSqlQuery* query, const QString& string = "");
+    int lastIncrementId(const QString& table);
 
     QSqlDatabase m_database;
+    const QString version;
 };
 
 #endif // REQUESTHISTORY_H
