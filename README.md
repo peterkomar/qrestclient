@@ -1,4 +1,4 @@
-qrestclient
+QRestClient
 ===========
 ![alt tag](https://raw.githubusercontent.com/peterkomar/qrestclient/master/qrestclient.png)
 
